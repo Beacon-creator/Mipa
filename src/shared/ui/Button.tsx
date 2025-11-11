@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, Text, StyleSheet, ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, ViewStyle } from "react-native";
 
 export function PrimaryButton({
   title,
@@ -17,6 +17,30 @@ export function PrimaryButton({
     </Pressable>
   );
 }
+
+
+export function SecondaryButton({
+  title,
+  onPress,
+  style,
+  disabled,
+}: { title: string; onPress?: () => void; style?: ViewStyle; disabled?: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.secondary,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+        style,
+      ]}
+    >
+      <Text style={styles.secondaryText}>{title}</Text>
+    </Pressable>
+  );
+}
+
 
 export function LinkText({
   title,
@@ -41,4 +65,13 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
   link: { color: "#111827", fontSize: 14, fontWeight: "600", textAlign: "center" },
+  secondary: {
+  width: "100%",
+  paddingVertical: 16,
+  borderRadius: 12,
+  alignItems: "center",
+  backgroundColor: "#E5E7EB",
+},
+secondaryText: { color: "#111827", fontSize: 16, fontWeight: "700" },
+
 });

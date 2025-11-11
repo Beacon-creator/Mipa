@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
-import { LabeledField } from "@/shared/ui/LabeledField";
-import { PrimaryButton } from "@/shared/ui/Buttons";
+import { LabeledField } from "../../src/shared/ui/LabeledField";
+import { PrimaryButton } from "../../src/shared/ui/Button";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -44,9 +44,11 @@ export default function ForgotPasswordScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 24, gap: 16, justifyContent: "center" },
+  container: { flex: 1, padding: 24, gap: 16, paddingTop: 80 },
   header: { marginBottom: 12, alignItems: "center" },
-  title: { fontSize: 24, fontWeight: "800", textAlign: "center" },
-  subtitle: { fontSize: 14, opacity: 0.7, textAlign: "center", marginTop: 4 },
+  title: { fontSize: 20, fontWeight: "700", textAlign: "left" },
+  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "right", marginTop: 4 },
   form: { gap: 12, marginVertical: 8 },
 });
+
+

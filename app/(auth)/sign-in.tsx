@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { LabeledField } from  "../../src/shared/ui/LabeledField";
 import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -54,9 +54,9 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 24, gap: 16, justifyContent: "center" },
+  container: { flex: 1, padding: 24, gap: 16, paddingTop: 80 },
   header: { marginBottom: 12, alignItems: "center" },
-  title: { fontSize: 24, fontWeight: "800", textAlign: "center" },
-  subtitle: { fontSize: 14, opacity: 0.7, textAlign: "center", marginTop: 4 },
+  title: { fontSize: 20, fontWeight: "700", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "center", marginTop: 4 },
   form: { gap: 12, marginVertical: 8 },
 });
