@@ -6,10 +6,11 @@
     "paths": {
       "@/*": ["./*"],
       "@/core/*": ["src/core/*"],
+      "@/entities/*": ["src/entities/*"],
       "@/features/*": ["src/features/*"],
-      "@/widgets/*": ["src/widgets/*"],
+      "@/processes/*": ["src/processes/*"],
       "@/shared/*": ["src/shared/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "types"]
 }

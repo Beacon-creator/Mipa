@@ -10,8 +10,9 @@ module.exports = function (api) {
           alias: {
             "@": "./",
             "@/core": "./src/core",
+            "@/entities": "./src/entities",
             "@/features": "./src/features",
-            "@/widgets": "./src/widgets",
+            "@/processes": "./src/processes",
             "@/shared": "./src/shared",
           },
         },

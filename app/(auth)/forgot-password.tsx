@@ -1,10 +1,52 @@
-// app/(auth)/forgot-password.tsx
-import { View, Text } from "react-native";
+import React, { useState } from "react";
+import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { router } from "expo-router";
+import { LabeledField } from "@/shared/ui/LabeledField";
+import { PrimaryButton } from "@/shared/ui/Buttons";
 
-export default function ForgotPassword() {
+export default function ForgotPasswordScreen() {
+  const [email, setEmail] = useState("");
+
+  const onContinue = () => {
+    // TODO: trigger “send OTP” API
+    router.push("/(auth)/reset-password");
+  };
+
   return (
-    <View style={{ flex:1, alignItems:"center", justifyContent:"center" }}>
-      <Text>Forgot Password</Text>
-    </View>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Forgot password</Text>
+            <Text style={styles.subtitle}>Enter your email to receive a reset code.</Text>
+          </View>
+
+          <View style={styles.form}>
+            <LabeledField
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="you@example.com"
+              returnKeyType="done"
+            />
+          </View>
+
+          <PrimaryButton title="Continue" onPress={onContinue} />
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 24, gap: 16, justifyContent: "center" },
+  header: { marginBottom: 12, alignItems: "center" },
+  title: { fontSize: 24, fontWeight: "800", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.7, textAlign: "center", marginTop: 4 },
+  form: { gap: 12, marginVertical: 8 },
+});

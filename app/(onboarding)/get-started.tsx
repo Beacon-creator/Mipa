@@ -1,39 +1,67 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet, SafeAreaView, StatusBar } from "react-native";
 import { router } from "expo-router";
+import React from "react";
+import { Image, Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import mipaLogo from "../../assets/logos/Mipalogo.png";
 
 export default function GetStartedScreen() {
   const onGetStarted = () => router.push("/(onboarding)/carousel");
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <View style={styles.brand}><Text style={styles.logo}>YourBrand</Text></View>
-        <View style={styles.textBlock}>
-          <Text style={styles.title}>Welcome 👋</Text>
-          <Text style={styles.subtitle}>Short line about what your app does.</Text>
-        </View>
-        <Pressable onPress={onGetStarted} style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+      <StatusBar barStyle="light-content" />
+      
+      <View style={styles.centerContent}>
+        <Image source={mipaLogo} style={{ width: 44, height: 44, marginBottom: 5 }} resizeMode="contain" />
+        <Text style={styles.text}>Mipa</Text>
+
+        {/* Button */}
+        <Pressable
+          onPress={onGetStarted}
+          style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
+        >
           <Text style={styles.buttonText}>Get Started</Text>
         </Pressable>
-        <Text style={styles.footerHint}>You can change this later in Settings</Text>
       </View>
     </SafeAreaView>
   );
 }
 
-// (styles unchanged from before)
 const styles = StyleSheet.create({
-  safe:{flex:1,backgroundColor:"#fff"},
-  container:{flex:1,paddingHorizontal:24,paddingTop:24,paddingBottom:32,alignItems:"center",justifyContent:"space-between"},
-  brand:{marginTop:24,alignItems:"center"},
-  logo:{fontSize:24,fontWeight:"700",letterSpacing:1},
-  textBlock:{alignItems:"center",paddingHorizontal:8},
-  title:{fontSize:32,fontWeight:"800",textAlign:"center",marginBottom:8},
-  subtitle:{fontSize:16,textAlign:"center",opacity:0.7,lineHeight:22},
-  button:{width:"100%",paddingVertical:16,borderRadius:12,alignItems:"center",justifyContent:"center",backgroundColor:"#111827"},
-  buttonPressed:{opacity:0.85},
-  buttonText:{color:"#fff",fontSize:16,fontWeight:"700"},
-  footerHint:{fontSize:12,opacity:0.5,textAlign:"center"},
+  safe: {
+    flex: 1,
+    backgroundColor: "#185221",
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  logo: {
+    fontSize: 52,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginBottom: 30,
+    letterSpacing: 1,
+  },
+  button: {
+    width: "80%",
+    paddingVertical: 18,
+    borderRadius: 10,
+    marginTop: 40,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "#185221",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  text:{
+      color: "#FFFFFF",
+      fontSize: 40,
+      fontWeight: "700",
+  }
 });
