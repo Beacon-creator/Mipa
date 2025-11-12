@@ -14,12 +14,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons"; // expo vector icons
 
+
+
+
 const { width } = Dimensions.get("window");
 
 const categories = [
-  { id: "food", name: "Food", img: "https://picsum.photos/seed/food/200/200" },
-  { id: "drink", name: "Drink", img: "https://picsum.photos/seed/drink/200/200" },
-  { id: "cake", name: "Cake", img: "https://picsum.photos/seed/cake/200/200" },
+  { id: "food", name: "Food", img: "https://shorturl.at/IZm2X" },
+  { id: "drink", name: "Drink", img: "https://shorturl.at/UTAmX" },
+  { id: "cake", name: "Cake", img: "https://shorturl.at/mHfYx" },
   { id: "snacks", name: "Snacks", img: "https://picsum.photos/seed/snacks/200/200" },
   { id: "salad", name: "Salad", img: "https://picsum.photos/seed/salad/200/200" },
 ];
@@ -64,8 +67,8 @@ export default function HomeScreen() {
 
           {/* Location Row */}
           <View style={styles.locationRow}>
-            <Feather name="map-pin" size={16} color="#10B981" />
-            <Text style={styles.locationText}>  Lagos, Nigeria</Text>
+            <Feather name="map-pin" size={16} color="#185221" />
+            <Text style={styles.locationText}>  Paris, France</Text>
           </View>
 
           {/* Consumables (horizontal swipable categories chips with rounded square) */}

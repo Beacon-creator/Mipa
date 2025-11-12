@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
-import { PrimaryButton, GhostButton } from "@/shared/ui/Button";
+import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ export default function SignInScreen() {
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <View style={styles.container}>
-          {/* Header sits closer to the top */}
+
           <View style={styles.header}>
             <Text style={styles.title}>Sign In</Text>
           </View>
@@ -45,8 +46,8 @@ export default function SignInScreen() {
           </View>
 
           <PrimaryButton title="Log in" onPress={onLogin} />
-          <View style={{ height: 12 }} />
-          <GhostButton title="Forgot password?" onPress={() => router.push("/(auth)/forgot-password")} />
+          <View style={{ height: 10 }} />
+          <LinkText title="Forgot password?" onPress={() => router.push("/(auth)/forgot-password")} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -55,8 +56,8 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 24, justifyContent: "flex-start" },
-  header: { marginTop: 12, marginBottom: 18, alignItems: "flex-start" }, // closer to top-left-ish
+  container: { flex: 1, padding: 24, gap: 16, paddingTop: 40 },
+  header: { marginBottom: 12, justifyContent: "flex-start" },
   title: { fontSize: 20, fontWeight: "700", textAlign: "left" },
-  form: { gap: 12, marginBottom: 16 },
+  form: { gap: 12, marginBottom: 12 },
 });

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Text, Alert, Image, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import locationImg from "../../assets/images/body/location.png";
-import { PrimaryButton, SecondaryButton, GhostButton } from "@/shared/ui/Button";
+import { PrimaryButton, SecondaryButton, GhostButton } from "../../src/shared/ui/Button";
 
 export default function TurnOnLocation() {
   const [busy, setBusy] = useState(false);

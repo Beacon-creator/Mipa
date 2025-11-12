@@ -1,25 +1,23 @@
 import * as Location from "expo-location";
-import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, StatusBar, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LinkText, PrimaryButton } from "../../src/shared/ui/Button";
+import { View, Text, Alert, Image, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import locationImg from "../../assets/images/body/location.png";
+import { PrimaryButton, SecondaryButton, GhostButton } from "../../src/shared/ui/Button";
 
-export default function TurnOnLocationScreen() {
+export default function TurnOnLocation() {
   const [busy, setBusy] = useState(false);
 
-  const onEnable = async () => {
+  const request = async () => {
     try {
       setBusy(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission denied", "You can enable location later in Settings.");
+      if (status === "granted") {
+        // (optional) const loc = await Location.getCurrentPositionAsync({});
         router.push("/(auth)/signup-success");
-        return;
+      } else {
+        Alert.alert("Permission needed", "Please enable location to continue.");
       }
-      // Optional: get current position
-      // const position = await Location.getCurrentPositionAsync({});
-      router.push("/(auth)/signup-success");
     } catch (e: any) {
       Alert.alert("Location error", e?.message ?? "Unable to get permission.");
       router.push("/(auth)/signup-success");
@@ -28,38 +26,31 @@ export default function TurnOnLocationScreen() {
     }
   };
 
-  const onSkip = () => router.push("/(auth)/signup-success");
+  const skip = () => router.push("/(auth)/signup-success");
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <Image
-          style={styles.illustration}
-          resizeMode="contain"
-          // Replace with your asset if available: require("@/shared/assets/location.png")
-          source={{ uri: "https://picsum.photos/seed/location/1000/600" }}
-        />
-        <View style={styles.header}>
-          <Text style={styles.title}>Turn on location</Text>
-          <Text style={styles.subtitle}>
-            Enable location to personalize your experience. You can change this at any time.
-          </Text>
-        </View>
-
-        <PrimaryButton title={busy ? "Enabling..." : "Turn on"} onPress={onEnable} disabled={busy} />
-        <View style={{ height: 10 }} />
-        <LinkText title="Skip for now" onPress={onSkip} />
+    <View style={styles.container}>
+      <Image source={locationImg} style={styles.illustration} resizeMode="contain" />
+      <View style={styles.header}>
+        <Text style={styles.title}>Turn on location</Text>
+        <Text style={styles.subtitle}>
+          Enable location to personalize your experience. You can change this later.
+        </Text>
       </View>
-    </SafeAreaView>
+
+      <PrimaryButton title={busy ? "Enabling..." : "Turn on"} onPress={request} disabled={busy} />
+      <View style={{ height: 10 }} />
+      <SecondaryButton title="Skip for now" onPress={skip} />
+      <View style={{ height: 8 }} />
+      <GhostButton title="Why we need location" onPress={() => Alert.alert("Location", "Used to show nearby restaurants and relevant content.")} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 24, gap: 16, justifyContent: "center" },
-  header: { alignItems: "center", paddingHorizontal: 8 },
-  title: { fontSize: 20, fontWeight: "800", textAlign: "center" },
-  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "center", marginTop: 4, lineHeight: 20 },
-  illustration: { width: "100%", height: 220, marginBottom: 12, borderRadius: 12 },
+  container: { flex: 1, padding: 24, alignItems: "center", justifyContent: "center", gap: 12 },
+  illustration: { width: 220, height: 160, marginBottom: 8, borderRadius: 8 },
+  header: { alignItems: "center", paddingHorizontal: 8, marginBottom: 6 },
+  title: { fontSize: 22, fontWeight: "800", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.75, textAlign: "center", marginTop: 6, lineHeight: 20 },
 });

@@ -52,6 +52,14 @@ export function SecondaryButton({ title, onPress, style, disabled, ...rest }: Bt
   );
 }
 
+export function LinkText({ title, onPress }: { title: string; onPress?: () => void }) {
+  return (
+    <Pressable onPress={onPress}>
+      {({ pressed }) => <Text style={[styles.link, pressed && { opacity: 0.6 }]}>{title}</Text>}
+    </Pressable>
+  );
+}
+
 export function GhostButton({ title, onPress, style, textStyle, ...rest }: BtnProps) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.ghost, pressed && styles.pressed, style]} {...rest}>
@@ -68,7 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#10B981", // green brand for primary
+    backgroundColor: "#185221", // green brand for primary
   },
   primaryText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
@@ -90,4 +98,5 @@ const styles = StyleSheet.create({
 
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
+   link: { color: "#111827", fontSize: 14, fontWeight: "600", textAlign: "center" },
 });
