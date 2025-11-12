@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton } from "../../src/shared/ui/Button";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");

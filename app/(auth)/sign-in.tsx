@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
-import { LabeledField } from  "../../src/shared/ui/LabeledField";
-import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { LabeledField } from "../../src/shared/ui/LabeledField";
+import { PrimaryButton, GhostButton } from "@/shared/ui/Button";
+
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
 
   const onLogin = () => {
     // TODO: call login API
-    // router.replace("/(app)/home"); // when main app area exists
+    // router.replace("/(app)/home");
   };
 
   return (
@@ -18,6 +18,7 @@ export default function SignInScreen() {
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <View style={styles.container}>
+          {/* Header sits closer to the top */}
           <View style={styles.header}>
             <Text style={styles.title}>Sign In</Text>
           </View>
@@ -45,7 +46,7 @@ export default function SignInScreen() {
 
           <PrimaryButton title="Log in" onPress={onLogin} />
           <View style={{ height: 12 }} />
-          <LinkText title="Forgot password?" onPress={() => router.push("/(auth)/forgot-password")} />
+          <GhostButton title="Forgot password?" onPress={() => router.push("/(auth)/forgot-password")} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -54,9 +55,8 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 24, gap: 16, paddingTop: 80 },
-  header: { marginBottom: 12, alignItems: "center" },
-  title: { fontSize: 20, fontWeight: "700", textAlign: "center" },
-  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "center", marginTop: 4 },
-  form: { gap: 12, marginVertical: 8 },
+  container: { flex: 1, padding: 24, justifyContent: "flex-start" },
+  header: { marginTop: 12, marginBottom: 18, alignItems: "flex-start" }, // closer to top-left-ish
+  title: { fontSize: 20, fontWeight: "700", textAlign: "left" },
+  form: { gap: 12, marginBottom: 16 },
 });
