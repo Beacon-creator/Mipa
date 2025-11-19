@@ -14,35 +14,49 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
-
-
 const { width } = Dimensions.get("window");
 
 const categories = [
+  { id: "all",  name: "All",   img: "https://shorturl.at/IZm2X" }, // <--- new
   { id: "food", name: "Food", img: "https://shorturl.at/IZm2X" },
   { id: "drink", name: "Drink", img: "https://shorturl.at/UTAmX" },
   { id: "cake", name: "Cake", img: "https://shorturl.at/mHfYx" },
-  { id: "snacks", name: "Snacks", img: "https://picsum.photos/seed/snacks/200/200" },
-  { id: "salad", name: "Salad", img: "https://picsum.photos/seed/salad/200/200" },
+  { id: "salad", name: "Salad", img: "https://tinyurl.com/y2zukmjx" },
+  { id: "snacks", name: "Snacks", img: "https://tinyurl.com/3mbj4y9r" },
 ];
 
 const foods = [
-  { id: "f1", title: "Burger", price: "$6.50", img: "https://rb.gy/wy62zo", type: "food" },
-  { id: "f2", title: "Pizza", price: "$8.00", img: "https://bit.ly/4o7W6TZ", type: "food" },
-  { id: "d1", title: "Latte", price: "$3.50", img: "https://bit.ly/4ph33CO", type: "drink" },
+  { id: "f1", title: "Burger", price: "$6.50", img: "https://picsum.dev/image/329/500/500", type: "food" },
+  { id: "f2", title: "Pizza", price: "$8.00", img: "https://unsplash.com/photos/8FUfIQ_2oYw/download?force=true&w=800&h=800", type: "food" },
+  { id: "f3", title: "Latte", price: "$3.50", img: "https://tinyurl.com/3n87227t", type: "drink" },
+];
+
+// New second group items (distinct from the first group)
+const secondGroup = [
+  { id: "s1", title: "Chicken", price: "$4.00", img: "https://tinyurl.com/bdcfr6x2" },
+  { id: "s2", title: "Beans", price: "$5.00", img: "https://tinyurl.com/4r55cvkh" },
+  { id: "s3", title: "Bread", price: "$7.00", img: "https://tinyurl.com/4b8u3f7h" },
 ];
 
 const nearby = [
-  { id: "r1", name: "Joe's Diner", distance: "0.4km", rating: 4.5, img: "https://picsum.photos/seed/r1/120/80", location: "Ikeja" },
-  { id: "r2", name: "Bella Bistro", distance: "1.2km", rating: 4.7, img: "https://picsum.photos/seed/r2/120/80", location: "VI" },
+  { id: "r1", name: "Joe's Diner", distance: "0.4km", rating: 4.5, img: "https://tinyurl.com/3j9hrfa5", location: "Ikeja" },
+  { id: "r2", name: "Bella Bistro", distance: "1.2km", rating: 4.7, img: "https://tinyurl.com/yjdymmnn", location: "VI" },
+  { id: "r3", name: "Awesome Restaurant", distance: "0.9km", rating: 4.5, img: "https://tinyurl.com/5buf2ewh", location: "Ikeja" },
+  { id: "r4", name: "Cobi Food", distance: "0.5km", rating: 4.9, img: "https://tinyurl.com/yjdymmnn", location: "Sango" },
 ];
 
 export default function HomeScreen() {
   const [query, setQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("food");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const activeFoods = useMemo(() => foods.filter((f) => f.type === selectedCategory), [selectedCategory]);
+
+// compute activeFoods: if 'all' show everything, otherwise filter by type
+const activeFoods = useMemo(() => {
+  if (selectedCategory === "all") return foods;
+  return foods.filter((f) => f.type === selectedCategory);
+}, [selectedCategory]);
+
+
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -94,7 +108,7 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Menu for active category (simple horizontal list of items) */}
+          {/* Menu for active category (first horizontal list) */}
           <View style={{ marginTop: 18 }}>
             <Text style={styles.sectionTitle}>{selectedCategory.toUpperCase()}</Text>
             <FlatList
@@ -105,27 +119,33 @@ export default function HomeScreen() {
               contentContainerStyle={{ paddingHorizontal: 8 }}
               renderItem={({ item }) => (
                 <View style={styles.menuCard}>
-                  <Image source={{ uri: item.img }} style={styles.menuImg} />
-                  <Text style={styles.menuTitle}>{item.title}</Text>
-                  <Text style={styles.menuPrice}>{item.price}</Text>
+                  <View style={styles.imageWrap}>
+                    <Image source={{ uri: item.img }} style={styles.menuImg} />
+                    <View style={styles.menuOverlay}>
+                      <Text style={styles.menuTitleOverlay}>{item.title}</Text>
+                      <Text style={styles.menuPriceOverlay}>{item.price}</Text>
+                    </View>
+                  </View>
                 </View>
               )}
             />
-          </View>
 
-          {/* Category chips (two-line look) - implemented as horizontal scroll of pill cards */}
-          <View style={{ marginTop: 18 }}>
-            <Text style={styles.sectionTitle}>Categories</Text>
+            {/* Second horizontal group — distinct items */}
             <FlatList
-              data={categories}
+              data={secondGroup}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(i) => i.id}
-              contentContainerStyle={{ paddingHorizontal: 8 }}
+              contentContainerStyle={{ paddingHorizontal: 8, marginTop: 12 }}
               renderItem={({ item }) => (
-                <View style={styles.chip}>
-                  <Image source={{ uri: item.img }} style={styles.chipImg} />
-                  <Text style={styles.chipText}>{item.name}</Text>
+                <View style={styles.menuCard}>
+                  <View style={styles.imageWrap}>
+                    <Image source={{ uri: item.img }} style={styles.menuImg} />
+                    <View style={styles.menuOverlay}>
+                      <Text style={styles.menuTitleOverlay}>{item.title}</Text>
+                      <Text style={styles.menuPriceOverlay}>{item.price}</Text>
+                    </View>
+                  </View>
                 </View>
               )}
             />
@@ -201,7 +221,26 @@ const styles = StyleSheet.create({
     elevation: 2,
     paddingBottom: 8,
   },
-  menuImg: { width: "100%", height: 120 },
+  imageWrap: { position: "relative", width: "100%", height: 120 },
+  menuImg: { width: "100%", height: "100%" },
+  // overlay row on top of the image: title left, price right
+  menuOverlay: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    bottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    // subtle background for readability
+    backgroundColor: "rgba(0,0,0,0.35)",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  menuTitleOverlay: { color: "#fff", fontWeight: "700", fontSize: 14, maxWidth: "70%" },
+  menuPriceOverlay: { color: "#fff", fontWeight: "700", fontSize: 13 },
+
   menuTitle: { fontWeight: "700", fontSize: 14, paddingHorizontal: 8, marginTop: 8 },
   menuPrice: { paddingHorizontal: 8, color: "#6B7280", marginTop: 4 },
 
