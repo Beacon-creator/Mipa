@@ -28,7 +28,7 @@ const categories = [
 ];
 
 const foods = [
-  { id: "f1", title: "Burger", price: "$6.50", img: "https://bit.ly/49sbKFT", type: "food" },
+  { id: "f1", title: "Burger", price: "$6.50", img: "https://rb.gy/wy62zo", type: "food" },
   { id: "f2", title: "Pizza", price: "$8.00", img: "https://bit.ly/4o7W6TZ", type: "food" },
   { id: "d1", title: "Latte", price: "$3.50", img: "https://bit.ly/4ph33CO", type: "drink" },
 ];
