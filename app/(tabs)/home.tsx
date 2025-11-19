@@ -1,18 +1,18 @@
-import React, { useState, useMemo } from "react";
+import { Feather } from "@expo/vector-icons"; // expo vector icons
+import { useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StatusBar,
-  TextInput,
-  StyleSheet,
-  Pressable,
+  Dimensions,
   FlatList,
   Image,
-  Dimensions,
+  Pressable,
   ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons"; // expo vector icons
 
 
 
@@ -28,9 +28,9 @@ const categories = [
 ];
 
 const foods = [
-  { id: "f1", title: "Burger", price: "$6.50", img: "https://picsum.photos/seed/b1/300/200", type: "food" },
-  { id: "f2", title: "Pizza", price: "$8.00", img: "https://picsum.photos/seed/b2/300/200", type: "food" },
-  { id: "d1", title: "Latte", price: "$3.50", img: "https://picsum.photos/seed/d1/300/200", type: "drink" },
+  { id: "f1", title: "Burger", price: "$6.50", img: "https://bit.ly/49sbKFT", type: "food" },
+  { id: "f2", title: "Pizza", price: "$8.00", img: "https://bit.ly/4o7W6TZ", type: "food" },
+  { id: "d1", title: "Latte", price: "$3.50", img: "https://bit.ly/4ph33CO", type: "drink" },
 ];
 
 const nearby = [
