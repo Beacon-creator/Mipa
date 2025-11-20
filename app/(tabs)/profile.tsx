@@ -84,20 +84,6 @@ export default function ProfileTabScreen() {
           ))}
         </View>
 
-        {/* Settings group example */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          <Pressable
-            style={styles.row}
-            onPress={() => goTo("/(profile)/settings")}
-          >
-            <View style={styles.rowLeft}>
-              <Feather name="sliders" size={18} color="#111827" />
-              <Text style={styles.rowLabel}>Payment & app settings</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color="#9CA3AF" />
-          </Pressable>
-        </View>
 
         {/* Logout */}
         <View style={styles.footer}>

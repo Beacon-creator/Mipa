@@ -1,74 +1,96 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Switch, Pressable, StatusBar, Alert } from "react-native";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
-const appVersion = "1.0.0";
-
 export default function AppSettingsScreen() {
-  const [language, setLanguage] = useState<"en" | "fr" | "yo">("en");
+  const [darkMode, setDarkMode] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [language, setLanguage] = useState<"en" | "fr">("en");
+
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === "en" ? "fr" : "en"));
+  };
+
+  const onAboutPress = () => {
+    Alert.alert(
+      "About us",
+      "Mipa helps you discover nearby restaurants, order your favourite meals, and track deliveries in real time."
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
       <Stack.Screen options={{ title: "App settings" }} />
-      <View style={styles.container}>
-        {/* About us */}
-        <Text style={styles.sectionTitle}>About us</Text>
-        <Text style={styles.aboutText}>
-          Mipa helps you discover nearby restaurants, order your favourite meals, and track your
-          deliveries in real time. Our goal is to make great food more accessible, wherever you are.
-        </Text>
 
-        {/* Change language */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Language</Text>
-        <View style={styles.languageRow}>
-          {(["en", "fr", "yo"] as const).map((code) => {
-            const label = code === "en" ? "English" : code === "fr" ? "French" : "Yoruba";
-            const active = language === code;
-            return (
-              <Pressable
-                key={code}
-                onPress={() => setLanguage(code)}
-                style={[
-                  styles.langChip,
-                  active && styles.langChipActive,
-                ]}
-              >
-                <Text style={[styles.langText, active && { color: "#fff" }]}>{label}</Text>
-              </Pressable>
-            );
-          })}
+      <View style={styles.container}>
+        {/* Toggles */}
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <View>
+              <Text style={styles.rowTitle}>Dark mode</Text>
+              <Text style={styles.rowMeta}>Use a darker theme to reduce eye strain.</Text>
+            </View>
+            <Switch value={darkMode} onValueChange={setDarkMode} />
+          </View>
+
+          <View style={styles.row}>
+            <View>
+              <Text style={styles.rowTitle}>Notifications</Text>
+              <Text style={styles.rowMeta}>Order status updates and promotions.</Text>
+            </View>
+            <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} />
+          </View>
         </View>
 
-        {/* Version */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Version</Text>
-        <Text style={styles.versionText}>Mipa v{appVersion}</Text>
+        {/* Language & About */}
+        <View style={styles.card}>
+          <Pressable style={styles.row} onPress={toggleLanguage}>
+            <View>
+              <Text style={styles.rowTitle}>Language</Text>
+              <Text style={styles.rowMeta}>Current: {language === "en" ? "English" : "Français"}</Text>
+            </View>
+          </Pressable>
+
+          <Pressable style={styles.row} onPress={onAboutPress}>
+            <View>
+              <Text style={styles.rowTitle}>About us</Text>
+              <Text style={styles.rowMeta}>Learn more about this app.</Text>
+            </View>
+          </Pressable>
+
+          <View style={[styles.row, { borderBottomWidth: 0 }]}>
+            <View>
+              <Text style={styles.rowTitle}>Version</Text>
+              <Text style={styles.rowMeta}>1.0.0</Text>
+            </View>
+          </View>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, padding: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: "800", marginBottom: 8 },
-  aboutText: { fontSize: 13, color: "#4B5563", lineHeight: 20 },
-
-  languageRow: { flexDirection: "row", gap: 8 },
-  langChip: {
+  safe: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1, padding: 16, gap: 16 },
+  card: {
+    borderRadius: 12,
+    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#fff",
+    borderColor: "#E5E7EB",
   },
-  langChipActive: {
-    backgroundColor: "#111827",
-    borderColor: "#111827",
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
-  langText: { fontSize: 13, fontWeight: "600", color: "#111827" },
-
-  versionText: { fontSize: 13, color: "#6B7280" },
+  rowTitle: { fontSize: 15, fontWeight: "700" },
+  rowMeta: { fontSize: 13, color: "#6B7280", marginTop: 2, maxWidth: 220 },
 });

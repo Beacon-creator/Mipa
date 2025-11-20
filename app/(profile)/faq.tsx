@@ -1,83 +1,72 @@
-import { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from "react-native";
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, StatusBar } from "react-native";
 import { Stack } from "expo-router";
-import { Feather } from "@expo/vector-icons";
 
-// Enable animation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
 
-const faqData = [
+const faqs: FaqItem[] = [
   {
-    id: 1,
+    id: "q1",
     question: "How do I place an order?",
     answer:
-      "Browse through categories, select a restaurant, choose your preferred meal, and tap the Order button. You can track your order in real-time.",
+      "Browse the home screen, select a restaurant, choose items from the Order tab, then tap the checkout button to confirm.",
   },
   {
-    id: 2,
-    question: "How do I reset my password?",
+    id: "q2",
+    question: "How are delivery fees calculated?",
     answer:
-      "Go to the Profile tab → Change Password. Follow the on-screen instructions to update your password securely.",
+      "Delivery fees depend on the distance between your location and the restaurant, and may vary during peak hours.",
   },
   {
-    id: 3,
-    question: "How do I update my profile information?",
+    id: "q3",
+    question: "Can I change or cancel my order?",
     answer:
-      "Navigate to Profile → My Profile. There you can update your name, email, address, or phone number.",
+      "You can change or cancel an order only before the restaurant starts preparing it. Go to Orders and check the order status.",
   },
   {
-    id: 4,
-    question: "How can I contact support?",
+    id: "q4",
+    question: "What payment methods are supported?",
     answer:
-      "Use the Contact Us page where you can send us a direct message or view available support options.",
+      "We support debit and credit cards, and in some regions, wallet and pay-on-delivery options. Manage them under Payment Settings.",
   },
   {
-    id: 5,
-    question: "Is my payment information secure?",
+    id: "q5",
+    question: "How do I contact support?",
     answer:
-      "Absolutely. We use industry-standard encryption and do not store your card details on our servers.",
+      "Use the Contact Us section in your profile or send us an email from there. Our support team is available 24/7.",
   },
 ];
 
-export default function FAQPage() {
-  const [openId, setOpenId] = useState<number | null>(null);
-
-  const toggle = (id: number) => {
-    LayoutAnimation.easeInEaseOut();
-    setOpenId(prev => (prev === id ? null : id));
-  };
+export default function FaqScreen() {
+  const [openId, setOpenId] = useState<string | null>(faqs[0]?.id ?? null);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
       <Stack.Screen options={{ title: "FAQ" }} />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        {faqData.map(item => {
-          const isOpen = openId === item.id;
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.header}>Frequently Asked Questions</Text>
+        <Text style={styles.subHeader}>
+          Find quick answers to common questions about orders, payments and your account.
+        </Text>
+
+        {faqs.map((item) => {
+          const open = item.id === openId;
           return (
             <View key={item.id} style={styles.card}>
-              <Pressable onPress={() => toggle(item.id)} style={styles.row}>
+              <Pressable
+                onPress={() => setOpenId(open ? null : item.id)}
+                style={styles.questionRow}
+              >
                 <Text style={styles.question}>{item.question}</Text>
-                <Feather
-                  name={isOpen ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#111827"
-                />
+                <Text style={styles.chevron}>{open ? "−" : "+"}</Text>
               </Pressable>
-
-              {isOpen && <Text style={styles.answer}>{item.answer}</Text>}
+              {open && <Text style={styles.answer}>{item.answer}</Text>}
             </View>
           );
         })}
@@ -87,29 +76,25 @@ export default function FAQPage() {
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#fff" },
+  content: { padding: 16, paddingBottom: 32 },
+  header: { fontSize: 22, fontWeight: "800", marginBottom: 4 },
+  subHeader: { fontSize: 14, color: "#6B7280", marginBottom: 16 },
   card: {
-    padding: 16,
-    marginBottom: 10,
     borderRadius: 12,
-    backgroundColor: "#F9FAFB",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    backgroundColor: "#F9FAFB",
   },
-  row: {
+  questionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  question: {
-    fontSize: 15,
-    fontWeight: "700",
-    flex: 1,
-    paddingRight: 8,
-  },
-  answer: {
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#4B5563",
-  },
+  question: { flex: 1, fontSize: 15, fontWeight: "600", marginRight: 8 },
+  chevron: { fontSize: 20, color: "#6B7280", fontWeight: "600" },
+  answer: { marginTop: 6, fontSize: 14, color: "#4B5563", lineHeight: 20 },
 });
