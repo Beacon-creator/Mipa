@@ -1,6 +1,8 @@
 import React from "react";
-import { SafeAreaView, View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Stack, useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function SettingsScreen() {
   const router = useRouter();

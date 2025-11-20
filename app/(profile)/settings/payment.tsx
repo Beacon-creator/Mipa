@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { SafeAreaView, View, Text, StyleSheet, Pressable, Alert, TextInput, Modal } from "react-native";
+import { View, Text, StyleSheet, Pressable, Alert, TextInput, Modal } from "react-native";
 import { Stack } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 type Card = {
   id: string;

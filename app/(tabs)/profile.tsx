@@ -1,7 +1,6 @@
 // app/(tabs)/profile.tsx
 import React from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ProfileRoute =
   | "/(profile)/my-profile"

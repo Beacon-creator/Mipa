@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton, SecondaryButton } from "../../src/shared/ui/Button";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MyProfileScreen() {
   const [name, setName] = useState("Ada Lovelace");

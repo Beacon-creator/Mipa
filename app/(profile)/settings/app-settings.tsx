@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { SafeAreaView, View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Stack } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 const appVersion = "1.0.0";
 
