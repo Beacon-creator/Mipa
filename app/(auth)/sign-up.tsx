@@ -1,19 +1,59 @@
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import {StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { router } from "expo-router";
 import {LabeledField} from  "../../src/shared/ui/LabeledField";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_BASE } from "../../src/shared/constants/api";
 import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
+  const [password, setPassword] = useState("");
+  const [cpw, setCpw] = useState("");
 
-  const onContinue = () => {
-    // TODO: perform basic validation / API call
-    router.push("/(auth)/verify-email");
-  };
+const onContinue = async () => {
+  try {
+    // basic local validation
+    if (!name?.trim() || !email?.trim() || !password) {
+      Alert.alert("Validation", "Please fill name, email and password.");
+      return;
+    }
+
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      const message = json?.error || json?.message || "Signup failed";
+      Alert.alert("Signup error", message);
+      return;
+    }
+
+    // expected dev response: { user, token, needsEmailVerification, verificationCode }
+    const { user, token, verificationCode } = json;
+
+    // store token for later authenticated calls
+    await AsyncStorage.setItem("mipa_token", token);
+
+    // navigate to verify email screen; pass email and userId (and dev verificationCode if you want)
+    // in expo-router you can pass params as query string:
+    router.push({
+      pathname: "/(auth)/verify-email",
+      params: { email: user.email, userId: user.id, devCode: verificationCode },
+    });
+
+    // NOTE: For production you will not pass the code. This is dev-only.
+  } catch (err: any) {
+    console.error("signup error", err);
+    Alert.alert("Signup error", err?.message ?? "Something went wrong");
+  }
+};
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -47,8 +87,17 @@ export default function SignUpScreen() {
             />
             <LabeledField
               label="Password"
-              value={pw}
-              onChangeText={setPw}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+              returnKeyType="done"
+            />
+
+              <LabeledField
+              label="Confirm Password"
+              value={cpw}
+              onChangeText={setCpw}
               placeholder="••••••••"
               secureTextEntry
               returnKeyType="done"
