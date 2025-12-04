@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   StatusBar,
   View,
@@ -8,14 +8,35 @@ import {
   Keyboard,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { API_BASE } from "../../src/shared/constants/api";
 
 export default function VerifyEmailScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ email?: string; devCode?: string }>();
+  const userEmail = (params?.email ?? "") as string; // email passed as param from sign-up
+  const devCode = (params?.devCode ?? null) as string | null;
+
   const cells = useMemo(() => [0, 1, 2, 3], []);
   const [code, setCode] = useState<string[]>(["", "", "", ""]);
-  const inputs = useRef<(TextInput | null)[]>([]); // ✅ T[] form & typed correctly
+  const inputs = useRef<(TextInput | null)[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  // 1) If devCode is passed (from signup), autofill on mount
+  useEffect(() => {
+    if (devCode && typeof devCode === "string" && devCode.length === 4) {
+      const arr = devCode.split("");
+      setCode(arr);
+      // focus last input (optional)
+      setTimeout(() => inputs.current[3]?.focus(), 50);
+    }
+  }, [devCode]);
 
   const setDigit = (i: number, v: string) => {
     const val = v.replace(/[^0-9]/g, "").slice(-1); // keep last digit
@@ -36,15 +57,102 @@ export default function VerifyEmailScreen() {
   const otpString = code.join("");
   const canVerify = otpString.length === 4;
 
-  const onVerify = () => {
-    Keyboard.dismiss();
-    // TODO: verify OTP via API, then navigate
-    // router.push("/(auth)/congratulations");
+  async function verifyApi(email: string, codeStr: string) {
+    const url = `${API_BASE}/auth/verify-email`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code: codeStr }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || json?.message || "Verify failed");
+    return json;
+  }
+
+  async function resendApi(email: string) {
+    // endpoint to request a fresh verification code (dev: returns code in response)
+    const url = `${API_BASE}/auth/resend-verification`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || "Failed to resend");
+    return json; // expect { verificationCode?: "1234" }
+  }
+
+  const onVerify = async () => {
+    if (!userEmail) {
+      Alert.alert("Missing email", "No email provided. Please go back and sign up again.");
+      return;
+    }
+
+    if (!canVerify) return;
+
+    setLoading(true);
+    try {
+    await verifyApi(userEmail, otpString);
+      Keyboard.dismiss();
+      router.push("/(auth)/signup-success");
+    } catch (err: any) {
+      console.error("verify error", err);
+      Alert.alert("Verification failed", err.message || "Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onResend = () => {
-    // TODO: resend OTP API
-    console.log("Resend OTP");
+  // 2) Watch otpString and auto-submit when 4 digits are present.
+  // Debounce a little so focus changes settle.
+  useEffect(() => {
+    if (otpString.length !== 4) return;
+
+    // Avoid auto-submitting if already submitting (loading) or if user is currently pressing Resend
+    if (loading || resendLoading) return;
+
+    const t = setTimeout(() => {
+      // double-check the guard
+      if (otpString.length === 4 && !loading) {
+        onVerify();
+      }
+    }, 250);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otpString]);
+
+  const onResend = async () => {
+    if (!userEmail) {
+      Alert.alert("Missing email", "No email provided. Please go back and sign up again.");
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      const json = await resendApi(userEmail);
+      // If backend returns verificationCode (dev), autofill & optionally auto-verify
+      const returned = (json && (json.verificationCode || json.resetCode)) ?? null;
+
+      if (returned && typeof returned === "string" && returned.length === 4) {
+        // fill code automatically
+        const arr = returned.split("");
+        setCode(arr);
+        // focus last input and auto-verify after tiny delay
+        inputs.current[3]?.focus();
+        setTimeout(() => {
+          onVerify();
+        }, 600);
+      } else {
+        Alert.alert("Code sent", "A verification code was generated. Check the app (dev) or email (prod).");
+      }
+    } catch (err: any) {
+      console.error("resend error", err);
+      Alert.alert("Resend failed", err.message || "Please try again.");
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   return (
@@ -55,7 +163,7 @@ export default function VerifyEmailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Verify your email</Text>
             <Text style={styles.subtitle}>
-              We sent a 4-digit code to your email. Enter it below to continue.
+              We sent a 4-digit code to {userEmail || "your email"}. It will auto-fill for development.
             </Text>
           </View>
 
@@ -63,7 +171,6 @@ export default function VerifyEmailScreen() {
             {cells.map((i) => (
               <TextInput
                 key={i}
-                // ✅ return void from ref callback
                 ref={(el) => {
                   inputs.current[i] = el;
                 }}
@@ -81,11 +188,15 @@ export default function VerifyEmailScreen() {
 
           <View style={{ alignItems: "center", marginTop: 12 }}>
             <Text style={styles.mutedText}>Didn’t receive the code?</Text>
-            <LinkText title="Resend" onPress={onResend} />
+            <View style={{ marginTop: 6 }}>
+              <LinkText title="Resend" onPress={onResend} />
+            </View>
+            {resendLoading ? <ActivityIndicator style={{ marginTop: 8 }} /> : null}
           </View>
 
           <View style={{ height: 16 }} />
-          <PrimaryButton title="Verify" onPress={onVerify} disabled={!canVerify} />
+          <PrimaryButton title="Verify" onPress={onVerify} disabled={!canVerify || loading} />
+          {loading ? <ActivityIndicator style={{ marginTop: 10 }} /> : null}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

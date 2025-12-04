@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { SafeAreaView, View, Text, StyleSheet, Pressable, StatusBar, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, StatusBar, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
 type Card = {

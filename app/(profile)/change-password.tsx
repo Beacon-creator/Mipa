@@ -1,18 +1,37 @@
+// app/(profile)/change-password.tsx
 import React, { useState } from "react";
-import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton } from "../../src/shared/ui/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import * as api from "../../src/shared/constants/api";
 
 export default function ChangePasswordScreen() {
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onSave = () => {
-    // TODO: validate + API
+  const onSave = async () => {
+    if (!currentPw || !newPw || !confirmPw) {
+      return Alert.alert("Error", "Please fill all fields");
+    }
+    if (newPw !== confirmPw) {
+      return Alert.alert("Error", "New password and confirm password do not match");
+    }
+    setLoading(true);
+    try {
+      await api.updatePassword(currentPw, newPw);
+      Alert.alert("Success", "Password updated");
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to update password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,7 +67,7 @@ export default function ChangePasswordScreen() {
           </View>
 
           <View style={{ marginTop: 20 }}>
-            <PrimaryButton title="Save password" onPress={onSave} />
+            <PrimaryButton title={loading ? "Saving..." : "Save password"} onPress={onSave} disabled={loading} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

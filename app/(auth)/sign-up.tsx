@@ -11,7 +11,6 @@ export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [cpw, setCpw] = useState("");
 
 const onContinue = async () => {
   try {
@@ -94,14 +93,14 @@ const onContinue = async () => {
               returnKeyType="done"
             />
 
-              <LabeledField
+              {/* <LabeledField
               label="Confirm Password"
               value={cpw}
               onChangeText={setCpw}
               placeholder="••••••••"
               secureTextEntry
               returnKeyType="done"
-            />
+            /> */}
           </View>
 
           <PrimaryButton title="Continue" onPress={onContinue} />

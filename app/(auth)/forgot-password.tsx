@@ -1,17 +1,60 @@
 import React, { useState } from "react";
-import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  StatusBar,
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+} from "react-native";
 import { router } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton } from "../../src/shared/ui/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { API_BASE } from "../../src/shared/constants/api";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onContinue = () => {
-    // TODO: trigger “send OTP” API
-    router.push("/(auth)/reset-password");
+  const onContinue = async () => {
+    if (!email?.trim()) {
+      Alert.alert("Validation", "Please enter your email.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      Keyboard.dismiss();
+      const res = await fetch(`${API_BASE}/auth/password/forgot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        const msg = json?.error || json?.message || "Failed to send reset code";
+        Alert.alert("Error", msg);
+        setLoading(false);
+        return;
+      }
+
+      // success — navigate to reset screen and pass email (so user doesn't need to retype)
+      router.push({
+        pathname: "/(auth)/reset-password",
+        params: { email: email.trim() },
+      });
+    } catch (err: any) {
+      console.error("forgot password error", err);
+      Alert.alert("Error", err?.message ?? "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,7 +80,8 @@ export default function ForgotPasswordScreen() {
             />
           </View>
 
-          <PrimaryButton title="Continue" onPress={onContinue} />
+          <PrimaryButton title={loading ? "Sending..." : "Continue"} onPress={onContinue} disabled={loading} />
+          {loading ? <ActivityIndicator style={{ marginTop: 10 }} /> : null}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -52,5 +96,3 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, opacity: 0.5, justifyContent: "flex-start", marginTop: 10 },
   form: { gap: 12, marginBottom: 10 },
 });
-
-

@@ -1,15 +1,19 @@
 // app/(tabs)/profile.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   Pressable,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as api from "../../src/shared/constants/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ProfileRoute =
   | "/(profile)/my-profile"
@@ -29,17 +33,46 @@ const profileLinks: { label: string; route?: ProfileRoute; icon: keyof typeof Fe
 export default function ProfileTabScreen() {
   const router = useRouter();
 
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  let mounted = true;
+  (async () => {
+    try {
+      const data = await api.getMe();
+      if (mounted) {
+        setUser(data);
+      }
+    } catch (err: any) {
+      if (err.status === 401) {
+        await AsyncStorage.removeItem("authToken");
+        router.replace("/(auth)/sign-in");
+      } else {
+        console.warn("Failed to load user", err.message || err);
+      }
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  })();
+  return () => {
+    mounted = false;
+  };
+}, [router]);
+
+
   const goTo = (route: ProfileRoute) => {
     router.push(route);
   };
 
-  const onLogout = () => {
-    // TODO: clear auth state & redirect to sign-in
-    // router.replace("/(auth)/sign-in");
+  const onLogout = async () => {
+    await AsyncStorage.removeItem("authToken");
+    // clear any other auth state you might have
+    router.replace("/(auth)/sign-in");
   };
 
   const onChangeAvatar = () => {
-    // TODO: open image picker later
+    // still a TODO; leave existing behavior
     console.log("Change avatar");
   };
 
@@ -49,19 +82,25 @@ export default function ProfileTabScreen() {
         {/* Header: avatar + name + phone */}
         <View style={styles.header}>
           <Pressable onPress={onChangeAvatar} style={styles.avatarWrap}>
-            <Image
-              source={{
-                uri: "https://ui-avatars.com/api/?name=User&background=10B981&color=fff",
-              }}
-              style={styles.avatar}
-            />
+            {loading ? (
+              <ActivityIndicator />
+            ) : (
+              <Image
+                source={{
+                  uri:
+                    user?.avatarUrl ??
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name ?? "User")}&background=10B981&color=fff`,
+                }}
+                style={styles.avatar}
+              />
+            )}
             <View style={styles.avatarEditBadge}>
               <Feather name="camera" size={14} color="#fff" />
             </View>
           </Pressable>
 
-          <Text style={styles.name}>John Doe</Text>
-          <Text style={styles.phone}>+234 800 000 0000</Text>
+          <Text style={styles.name}>{loading ? "Loading..." : user?.name ?? "Unknown"}</Text>
+          <Text style={styles.phone}>{loading ? "" : user?.phone ?? "+234 800 000 0000"}</Text>
         </View>
 
         {/* Links */}
@@ -84,10 +123,14 @@ export default function ProfileTabScreen() {
           ))}
         </View>
 
-
         {/* Logout */}
         <View style={styles.footer}>
-          <Pressable onPress={onLogout} style={styles.logoutBtn}>
+          <Pressable onPress={() => {
+            Alert.alert("Log out", "Are you sure you want to log out?", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Log out", style: "destructive", onPress: onLogout },
+            ]);
+          }} style={styles.logoutBtn}>
             <Feather name="log-out" size={18} color="#EF4444" />
             <Text style={styles.logoutText}>Log out</Text>
           </Pressable>

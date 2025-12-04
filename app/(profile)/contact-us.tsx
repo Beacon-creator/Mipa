@@ -1,18 +1,32 @@
+// app/(profile)/contact-us.tsx
 import React, { useState } from "react";
-import { StatusBar, View, Text, StyleSheet, ScrollView } from "react-native";
+import { StatusBar, View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton } from "../../src/shared/ui/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-
+import * as api from "../../src/shared/constants/api";
 
 export default function ContactUsScreen() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onSend = () => {
-    // TODO: send to support
+  const onSend = async () => {
+    if (!subject || !message) {
+      return Alert.alert("Error", "Subject and message are required");
+    }
+    setLoading(true);
+    try {
+      await api.contactUs(subject, message);
+      Alert.alert("Sent", "Your message has been sent. We'll get back to you soon.");
+      setSubject("");
+      setMessage("");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to send message");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +49,7 @@ export default function ContactUsScreen() {
         </View>
 
         <View style={{ marginTop: 20 }}>
-          <PrimaryButton title="Send message" onPress={onSend} />
+          <PrimaryButton title={loading ? "Sending..." : "Send message"} onPress={onSend} disabled={loading} />
         </View>
 
         <View style={{ marginTop: 24 }}>
