@@ -56,7 +56,7 @@ export default function SignInScreen() {
       }
 
       // persist token
-      await AsyncStorage.setItem("mipa_token", token);
+      await AsyncStorage.setItem("authToken", token);
 
       // navigate to the app — replace history so user can't go back to auth
       router.replace("/(tabs)/home");

@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE = "http://192.168.0.135:4000/api";
-
 export { API_BASE };
 
 async function getAuthHeaders() {
@@ -15,22 +14,37 @@ async function getAuthHeaders() {
 
 async function handleResponse(res: Response) {
   const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
+  let data: any = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.warn("handleResponse: response not JSON:", text.slice(0, 500));
+      const err: any = new Error(`Invalid JSON response from server (HTTP ${res.status})`);
+      err.status = res.status;
+      err.raw = text;
+      throw err;
+    }
   }
+
   if (!res.ok) {
-    const message = (data && data.message) || res.statusText || "Request failed";
+    // auto-clear token when unauthorized
+    if (res.status === 401) {
+      try { await AsyncStorage.removeItem("authToken"); } catch {}
+    }
+
+    const message = (data && (data.message || data.error)) || res.statusText || `HTTP ${res.status}`;
     const err: any = new Error(message);
     err.status = res.status;
-    err.data = data;
+    err.data = data ?? text;
     throw err;
   }
+
   return data;
 }
 
+// User API
 export async function getMe() {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/users/me`, { headers });
@@ -72,6 +86,7 @@ export async function contactUs(subject: string, message: string) {
   return handleResponse(res);
 }
 
+// Orders API
 export async function createOrder(payload: {
   restaurantId: string;
   items: { menuItemId: string; quantity: number }[];
@@ -112,22 +127,17 @@ export async function markOrderPaid(
 
 export async function listMyOrders() {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/orders`, {
-    method: "GET",
-    headers,
-  });
+  const res = await fetch(`${API_BASE}/orders`, { method: "GET", headers });
   return handleResponse(res);
 }
 
 export async function getOrderById(orderId: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/orders/${orderId}`, {
-    method: "GET",
-    headers,
-  });
+  const res = await fetch(`${API_BASE}/orders/${orderId}`, { method: "GET", headers });
   return handleResponse(res);
 }
 
+// Reviews
 export async function createReview(restaurantId: string, rating: number, comment?: string) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/restaurants/${restaurantId}/reviews`, {

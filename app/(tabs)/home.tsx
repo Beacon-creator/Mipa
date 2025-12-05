@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useCart } from "@/shared/ui/CartContext";
+import { useCart } from "../../src/shared/ui/CartContext";
 import * as api from "../../src/shared/constants/api";
 
 const { width } = Dimensions.get("window");

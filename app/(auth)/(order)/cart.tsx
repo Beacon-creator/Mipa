@@ -1,6 +1,6 @@
 // app/(auth)/(order)/cart.tsx
 import * as api from "../../../src/shared/constants/api";
-import { useCart } from "@/shared/ui/CartContext";
+import { useCart } from "../../../src/shared/ui/CartContext";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";

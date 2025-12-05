@@ -5,7 +5,9 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import successImg from "../../assets/images/body/success.png";
 export default function CongratulationsScreen() {
-  const goHome = () => router.replace("/(tabs)/home");
+
+
+const goHome = () => router.replace("/(auth)/sign-in"); 
 
   return (
     <SafeAreaView style={styles.safe}>

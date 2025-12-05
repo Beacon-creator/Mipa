@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import {
   StatusBar,
   View,
@@ -19,7 +19,7 @@ import { API_BASE } from "../../src/shared/constants/api";
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string; devCode?: string }>();
-  const userEmail = (params?.email ?? "") as string; // email passed as param from sign-up
+  const userEmail = (params?.email ?? "") as string;
   const devCode = (params?.devCode ?? null) as string | null;
 
   const cells = useMemo(() => [0, 1, 2, 3], []);
@@ -28,18 +28,16 @@ export default function VerifyEmailScreen() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
-  // 1) If devCode is passed (from signup), autofill on mount
+  // Autofill devCode on mount
   useEffect(() => {
-    if (devCode && typeof devCode === "string" && devCode.length === 4) {
-      const arr = devCode.split("");
-      setCode(arr);
-      // focus last input (optional)
+    if (devCode && devCode.length === 4) {
+      setCode(devCode.split(""));
       setTimeout(() => inputs.current[3]?.focus(), 50);
     }
   }, [devCode]);
 
   const setDigit = (i: number, v: string) => {
-    const val = v.replace(/[^0-9]/g, "").slice(-1); // keep last digit
+    const val = v.replace(/[^0-9]/g, "").slice(-1);
     const next = [...code];
     next[i] = val;
     setCode(next);
@@ -57,33 +55,36 @@ export default function VerifyEmailScreen() {
   const otpString = code.join("");
   const canVerify = otpString.length === 4;
 
-  async function verifyApi(email: string, codeStr: string) {
-    const url = `${API_BASE}/auth/verify-email`;
-    const res = await fetch(url, {
+  const verifyApi = async (email: string, codeStr: string) => {
+    const res = await fetch(`${API_BASE}/auth/verify-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, code: codeStr }),
     });
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json?.error || json?.message || "Verify failed");
-    return json;
-  }
+    const text = await res.text();
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
 
-  async function resendApi(email: string) {
-    // endpoint to request a fresh verification code (dev: returns code in response)
-    const url = `${API_BASE}/auth/resend-verification`;
-    const res = await fetch(url, {
+    if (!res.ok) throw new Error(json?.error || json?.message || `Verify failed (HTTP ${res.status})`);
+    return json;
+  };
+
+  const resendApi = async (email: string) => {
+    const res = await fetch(`${API_BASE}/auth/resend-verification`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json?.error || "Failed to resend");
-    return json; // expect { verificationCode?: "1234" }
-  }
+    const text = await res.text();
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
 
-  const onVerify = async () => {
+    if (!res.ok) throw new Error(json?.error || json?.message || `Failed to resend (HTTP ${res.status})`);
+    return json;
+  };
+
+  const onVerify = useCallback(async () => {
     if (!userEmail) {
       Alert.alert("Missing email", "No email provided. Please go back and sign up again.");
       return;
@@ -93,7 +94,7 @@ export default function VerifyEmailScreen() {
 
     setLoading(true);
     try {
-    await verifyApi(userEmail, otpString);
+      await verifyApi(userEmail, otpString);
       Keyboard.dismiss();
       router.push("/(auth)/signup-success");
     } catch (err: any) {
@@ -102,26 +103,20 @@ export default function VerifyEmailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [otpString, userEmail, canVerify, router]);
 
-  // 2) Watch otpString and auto-submit when 4 digits are present.
-  // Debounce a little so focus changes settle.
+  // Auto-submit when all digits are filled
   useEffect(() => {
-    if (otpString.length !== 4) return;
-
-    // Avoid auto-submitting if already submitting (loading) or if user is currently pressing Resend
-    if (loading || resendLoading) return;
+    if (otpString.length !== 4 || loading || resendLoading) return;
 
     const t = setTimeout(() => {
-      // double-check the guard
       if (otpString.length === 4 && !loading) {
         onVerify();
       }
     }, 250);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otpString]);
+  }, [otpString, loading, resendLoading, onVerify]);
 
   const onResend = async () => {
     if (!userEmail) {
@@ -132,20 +127,14 @@ export default function VerifyEmailScreen() {
     setResendLoading(true);
     try {
       const json = await resendApi(userEmail);
-      // If backend returns verificationCode (dev), autofill & optionally auto-verify
-      const returned = (json && (json.verificationCode || json.resetCode)) ?? null;
+      const returned = (json?.verificationCode || json?.resetCode) ?? null;
 
-      if (returned && typeof returned === "string" && returned.length === 4) {
-        // fill code automatically
-        const arr = returned.split("");
-        setCode(arr);
-        // focus last input and auto-verify after tiny delay
+      if (returned && returned.length === 4) {
+        setCode(returned.split(""));
         inputs.current[3]?.focus();
-        setTimeout(() => {
-          onVerify();
-        }, 600);
+        setTimeout(() => onVerify(), 600);
       } else {
-        Alert.alert("Code sent", "A verification code was generated. Check the app (dev) or email (prod).");
+        Alert.alert("Code sent", "A verification code was generated.");
       }
     } catch (err: any) {
       console.error("resend error", err);
@@ -171,9 +160,7 @@ export default function VerifyEmailScreen() {
             {cells.map((i) => (
               <TextInput
                 key={i}
-                ref={(el) => {
-                  inputs.current[i] = el;
-                }}
+                ref={(el: TextInput | null) => { inputs.current[i] = el; }}
                 value={code[i]}
                 onChangeText={(v) => setDigit(i, v)}
                 onKeyPress={(e) => onKeyPress(i, e)}
@@ -191,12 +178,12 @@ export default function VerifyEmailScreen() {
             <View style={{ marginTop: 6 }}>
               <LinkText title="Resend" onPress={onResend} />
             </View>
-            {resendLoading ? <ActivityIndicator style={{ marginTop: 8 }} /> : null}
+            {resendLoading && <ActivityIndicator style={{ marginTop: 8 }} />}
           </View>
 
           <View style={{ height: 16 }} />
           <PrimaryButton title="Verify" onPress={onVerify} disabled={!canVerify || loading} />
-          {loading ? <ActivityIndicator style={{ marginTop: 10 }} /> : null}
+          {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
