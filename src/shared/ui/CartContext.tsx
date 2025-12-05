@@ -1,6 +1,7 @@
 // src/context/CartContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 
 export type CartItem = {
   menuItemId: string;
@@ -53,21 +54,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addToCart = (item: Omit<CartItem, "quantity">, qty = 1) => {
-    setItems((prev) => {
-      const exists = prev.find((p) => p.menuItemId === item.menuItemId);
-      let next: CartItem[];
-      if (exists) {
-        next = prev.map((p) =>
-          p.menuItemId === item.menuItemId ? { ...p, quantity: p.quantity + qty } : p
-        );
-      } else {
-        next = [...prev, { ...item, quantity: qty }];
-      }
-      persist(next);
-      return next;
-    });
-  };
+const addToCart = (item: Omit<CartItem, "quantity">, qty = 1) => {
+  setItems((prev) => {
+    // enforce same restaurant
+    if (prev.length > 0 && prev[0].restaurantId !== item.restaurantId) {
+      Alert.alert("Cart Error", "You can only add items from one restaurant at a time.");
+      return prev;
+    }
+
+    const exists = prev.find((p) => p.menuItemId === item.menuItemId);
+    let next: CartItem[];
+    if (exists) {
+      next = prev.map((p) =>
+        p.menuItemId === item.menuItemId ? { ...p, quantity: p.quantity + qty } : p
+      );
+    } else {
+      next = [...prev, { ...item, quantity: qty }];
+    }
+    persist(next); // async save
+    return next;
+  });
+};
+
 
   const removeFromCart = (menuItemId: string) => {
     setItems((prev) => {

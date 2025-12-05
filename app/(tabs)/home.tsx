@@ -156,7 +156,7 @@ export default function HomeScreen() {
 
       const order = await api.createOrder(orderPayload);
       Alert.alert("✅ Order Successful", `Order No: ${order.orderNumber ?? order.id}`);
-      // After quick order, navigate to Order Details screen (if you created it)
+     
       router.push({ pathname: "/(order)/order/[id]", params: { id: order.id ?? order._id ?? order.orderNumber } } as any);
     } catch (err: any) {
       Alert.alert("❌ Order Failed", err?.message ?? String(err));
