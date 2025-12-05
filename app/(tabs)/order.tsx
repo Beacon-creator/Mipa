@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as api from "../../src/shared/constants/api";
+import { safeApiCall } from "../../src/shared/constants/safeApiCall";
 
 type OrderStatus = "pending" | "confirmed" | "preparing" | "on_the_way" | "delivered" | "cancelled";
 
@@ -26,25 +27,29 @@ type UIOrder = {
   eta?: string | null;
   dateLabel: string;
   itemsSummary: string;
-  total: string; // formatted
+  total: string;
   paymentStatus?: string;
   createdAt?: string;
 };
 
 function statusLabel(status: OrderStatus) {
-  if (status === "on_the_way") return "On the way";
-  if (status === "delivered") return "Delivered";
-  if (status === "preparing") return "Preparing";
-  if (status === "confirmed") return "Confirmed";
-  if (status === "cancelled") return "Cancelled";
-  return "Pending";
+  switch (status) {
+    case "on_the_way": return "On the way";
+    case "delivered": return "Delivered";
+    case "preparing": return "Preparing";
+    case "confirmed": return "Confirmed";
+    case "cancelled": return "Cancelled";
+    default: return "Pending";
+  }
 }
 
 function statusColor(status: OrderStatus) {
-  if (status === "on_the_way") return "#F97316";
-  if (status === "delivered") return "#10B981";
-  if (status === "cancelled") return "#EF4444";
-  return "#6B7280";
+  switch (status) {
+    case "on_the_way": return "#F97316";
+    case "delivered": return "#10B981";
+    case "cancelled": return "#EF4444";
+    default: return "#6B7280";
+  }
 }
 
 export default function OrderScreen() {
@@ -55,38 +60,31 @@ export default function OrderScreen() {
 
   const fetchOrders = async () => {
     setLoading(true);
-    try {
-      const res = await api.listMyOrders();
-      // backend returns array of order DTOs (toOrderDTO)
-      const items = Array.isArray(res) ? res : res.orders ?? res;
-      const mapped: UIOrder[] = (items || []).map((o: any) => {
-        // Compose a short items summary: "2 items · Burger, Fries"
+    const [res, err] = await safeApiCall(() => api.listMyOrders());
+    if (err) {
+      Alert.alert("Error", err.message || "Failed to fetch orders");
+    } else {
+      const items = Array.isArray(res) ? res : res?.orders ?? [];
+      const mapped: UIOrder[] = items.map((o: any) => {
         const itemNames = (o.items || []).slice(0, 3).map((it: any) => it.name);
         const itemsCount = (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0);
         const itemsSummary = `${itemsCount} item${itemsCount !== 1 ? "s" : ""} · ${itemNames.join(", ")}`;
-
-        // date label --- use createdAt
         const created = o.createdAt ? new Date(o.createdAt) : null;
         let dateLabel = "Unknown";
         if (created) {
           const now = new Date();
           const sameDay = created.toDateString() === now.toDateString();
-          const yesterday = new Date(now);
-          yesterday.setDate(now.getDate() - 1);
+          const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
           if (sameDay) dateLabel = "Today";
           else if (created.toDateString() === yesterday.toDateString()) dateLabel = "Yesterday";
           else dateLabel = created.toLocaleDateString(undefined, { month: "short", day: "numeric" });
         }
-
-        const total = typeof o.totalAmount === "number" ? `${formatCurrency(o.totalAmount)}` : `${o.totalAmount ?? ""}`;
-
-        const restaurantName =
-          typeof o.restaurant === "object" ? o.restaurant.name || "Restaurant" : (o.restaurant as string) || "Restaurant";
-
+        const total = typeof o.totalAmount === "number" ? formatCurrency(o.totalAmount) : `${o.totalAmount ?? ""}`;
+        const restaurantName = typeof o.restaurant === "object" ? o.restaurant.name || "Restaurant" : o.restaurant ?? "Restaurant";
         return {
           id: o.id || o._id,
           restaurantName,
-          restaurantImg: undefined, // backend doesn't return restaurant image; use placeholder if you want
+          restaurantImg: undefined,
           status: o.status as OrderStatus,
           eta: null,
           dateLabel,
@@ -97,49 +95,28 @@ export default function OrderScreen() {
         };
       });
       setOrders(mapped);
-    } catch (err: any) {
-      console.warn("Failed to load orders", err);
-      Alert.alert("Error", err?.message || "Failed to fetch orders");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    try {
-      await fetchOrders();
-    } finally {
-      setRefreshing(false);
-    }
+    await fetchOrders();
+    setRefreshing(false);
   };
 
-  // Determine currentOrder = most recent non-delivered and non-cancelled, else null
-  const currentOrder = useMemo(() => {
-    return orders.find((o) => o.status !== "delivered" && o.status !== "cancelled") ?? null;
-  }, [orders]);
-
-  const pastOrders = useMemo(() => {
-    // past = delivered or cancelled OR everything except the currentOrder
-    return orders.filter((o) => o.id !== (currentOrder?.id ?? ""));
-  }, [orders, currentOrder]);
+  const currentOrder = useMemo(() => orders.find(o => o.status !== "delivered" && o.status !== "cancelled") ?? null, [orders]);
+  const pastOrders = useMemo(() => orders.filter(o => o.id !== (currentOrder?.id ?? "")), [orders, currentOrder]);
 
   const handleMarkPaid = async (orderId: string) => {
     setActionLoadingOrderId(orderId);
-    try {
-      await api.markOrderPaid(orderId, { paymentStatus: "paid", paymentMethod: "card" });
-      Alert.alert("Success", "Order marked as paid");
-      await fetchOrders();
-    } catch (err: any) {
-      console.warn("mark paid error", err);
-      Alert.alert("Error", err?.message || "Failed to mark paid");
-    } finally {
-      setActionLoadingOrderId(null);
-    }
+    const [, err] = await safeApiCall(() => api.markOrderPaid(orderId, { paymentStatus: "paid", paymentMethod: "card" }));
+    if (err) Alert.alert("Error", err.message || "Failed to mark paid");
+    else Alert.alert("Success", "Order marked as paid");
+    await fetchOrders();
+    setActionLoadingOrderId(null);
   };
 
   return (
@@ -149,31 +126,24 @@ export default function OrderScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        {/* Header */}
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Orders</Text>
-          <Pressable
-            onPress={fetchOrders}
-            style={{ padding: 8 }}
-            accessibilityLabel="Refresh orders"
-          >
+          <Pressable onPress={fetchOrders} style={{ padding: 8 }}>
             <Feather name="refresh-cw" size={18} color="#111827" />
           </Pressable>
         </View>
 
+        {/* Current Order */}
         <View style={{ marginTop: 12 }}>
           <Text style={styles.sectionTitle}>Current order</Text>
-
           {loading ? (
             <ActivityIndicator style={{ marginTop: 12 }} />
           ) : currentOrder ? (
             <View style={styles.currentCard}>
               <View style={{ flexDirection: "row" }}>
                 <Image
-                  source={{
-                    uri:
-                      currentOrder.restaurantImg ??
-                      "https://via.placeholder.com/96x96.png?text=R",
-                  }}
+                  source={{ uri: currentOrder.restaurantImg ?? "https://via.placeholder.com/96x96.png?text=R" }}
                   style={styles.currentImg}
                 />
                 <View style={{ marginLeft: 12, flex: 1 }}>
@@ -186,7 +156,7 @@ export default function OrderScreen() {
               <View style={styles.currentFooterRow}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <View style={[styles.statusDot, { backgroundColor: statusColor(currentOrder.status) }]} />
-                  <Text style={styles.statusText}>{statusLabel(currentOrder.status as any)}</Text>
+                  <Text style={styles.statusText}>{statusLabel(currentOrder.status)}</Text>
                 </View>
                 <Text style={styles.currentTotal}>{currentOrder.total}</Text>
               </View>
@@ -194,10 +164,7 @@ export default function OrderScreen() {
               <View style={styles.currentActionsRow}>
                 <Pressable
                   style={[styles.primaryBtn]}
-                  onPress={() => {
-                    // Navigate to details later (if you implement order details)
-                  router.push({ pathname: "/(tabs)/order/[id]", params: { id: currentOrder.id } } as any);
-                  }}
+                  onPress={() => router.push({ pathname: "/(tabs)/order/[id]", params: { id: currentOrder.id } } as any)}
                 >
                   <Feather name="map" size={16} color="#fff" />
                   <Text style={styles.primaryBtnText}>Track order</Text>
@@ -206,28 +173,16 @@ export default function OrderScreen() {
                 {currentOrder.paymentStatus !== "paid" ? (
                   <Pressable
                     style={[styles.secondaryBtn, { marginLeft: 8 }]}
-                    onPress={() =>
-                      Alert.alert("Mark paid", "Mark this order as paid?", [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Yes",
-                          onPress: () => handleMarkPaid(currentOrder.id),
-                        },
-                      ])
-                    }
+                    onPress={() => Alert.alert("Mark paid", "Mark this order as paid?", [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Yes", onPress: () => handleMarkPaid(currentOrder.id) },
+                    ])}
                     disabled={actionLoadingOrderId === currentOrder.id}
                   >
-                    {actionLoadingOrderId === currentOrder.id ? (
-                      <ActivityIndicator />
-                    ) : (
-                      <Text style={styles.secondaryBtnText}>Mark as paid</Text>
-                    )}
+                    {actionLoadingOrderId === currentOrder.id ? <ActivityIndicator /> : <Text style={styles.secondaryBtnText}>Mark as paid</Text>}
                   </Pressable>
                 ) : (
-                  <Pressable
-                    style={[styles.secondaryBtn, { marginLeft: 8 }]}
-                    onPress={() => router.push("/(tabs)/home")}
-                  >
+                  <Pressable style={[styles.secondaryBtn, { marginLeft: 8 }]} onPress={() => router.push("/(tabs)/home")}>
                     <Text style={styles.secondaryBtnText}>Browse more</Text>
                   </Pressable>
                 )}
@@ -244,24 +199,14 @@ export default function OrderScreen() {
           )}
         </View>
 
+        {/* Past Orders */}
         <View style={{ marginTop: 24 }}>
-          <View style={styles.pastHeaderRow}>
-            <Text style={styles.sectionTitle}>Past orders</Text>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator style={{ marginTop: 12 }} />
-          ) : pastOrders.length === 0 ? (
+          <Text style={styles.sectionTitle}>Past orders</Text>
+          {loading ? <ActivityIndicator style={{ marginTop: 12 }} /> : pastOrders.length === 0 ? (
             <Text style={{ marginTop: 12, color: "#6B7280" }}>No past orders yet.</Text>
           ) : (
-            pastOrders.map((o) => (
-              <Pressable
-                key={o.id}
-                style={styles.pastCard}
-                onPress={() => {
-                  router.push({ pathname: "/(tabs)/order/[id]", params: { id: o.id } } as any);
-                }}
-              >
+            pastOrders.map(o => (
+              <Pressable key={o.id} style={styles.pastCard} onPress={() => router.push({ pathname: "/(tabs)/order/[id]", params: { id: o.id } } as any)}>
                 <Image source={{ uri: o.restaurantImg ?? "https://via.placeholder.com/64.png?text=R" }} style={styles.pastImg} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={styles.pastRestaurant}>{o.restaurantName}</Text>
@@ -269,7 +214,7 @@ export default function OrderScreen() {
                   <View style={styles.pastFooterRow}>
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                       <View style={[styles.statusDot, { backgroundColor: statusColor(o.status) }]} />
-                      <Text style={styles.statusText}>{statusLabel(o.status as any)}</Text>
+                      <Text style={styles.statusText}>{statusLabel(o.status)}</Text>
                     </View>
                     <Text style={styles.pastTotal}>{o.total}</Text>
                   </View>
@@ -283,7 +228,7 @@ export default function OrderScreen() {
   );
 }
 
-// small currency formatter — adjust for your locale/currency
+// small currency formatter
 function formatCurrency(amount: number) {
   try {
     return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(amount);

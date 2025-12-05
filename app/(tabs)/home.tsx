@@ -163,10 +163,13 @@ export default function HomeScreen() {
     }
   };
 
-  const activeFoods = useMemo(() => {
-    if (selectedCategory === "all") return foods;
-    return foods.filter((f) => f.type === selectedCategory);
-  }, [selectedCategory]);
+  //filter for foods and restaurant
+
+const activeFoods = useMemo(() => {
+  const base = selectedCategory === "all" ? foods : foods.filter((f) => f.type === selectedCategory);
+  if (!query) return base;
+  return base.filter((f) => f.title.toLowerCase().includes(query.toLowerCase()));
+}, [selectedCategory, query]);
 
   const filteredNearby = useMemo(() => {
     return nearby.filter((r) => {
