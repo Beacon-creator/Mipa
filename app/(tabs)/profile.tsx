@@ -1,19 +1,22 @@
 // app/(tabs)/profile.tsx
-import React, { useEffect, useState } from "react";
+import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Pressable,
   ActivityIndicator,
   Alert,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import * as api from "../../src/shared/constants/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { resolveAvatarUrl } from "../../src/shared/constants/resolveAvatarUrl";
 
 type ProfileRoute =
   | "/(profile)/my-profile"
@@ -22,7 +25,11 @@ type ProfileRoute =
   | "/(profile)/contact-us"
   | "/(profile)/faq";
 
-const profileLinks: { label: string; route?: ProfileRoute; icon: keyof typeof Feather.glyphMap }[] = [
+const profileLinks: {
+  label: string;
+  route?: ProfileRoute;
+  icon: keyof typeof Feather.glyphMap;
+}[] = [
   { label: "My profile", route: "/(profile)/my-profile", icon: "user" },
   { label: "Change password", route: "/(profile)/change-password", icon: "lock" },
   { label: "Settings", route: "/(profile)/settings", icon: "settings" },
@@ -35,72 +42,127 @@ export default function ProfileTabScreen() {
 
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
-useEffect(() => {
-  let mounted = true;
-  (async () => {
-    try {
-      const data = await api.getMe();
-      if (mounted) {
-        setUser(data);
+  /* ---------------- Fetch user ---------------- */
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const data = await api.getMe();
+        if (mounted) setUser(data);
+      } catch (err: any) {
+        if (err?.status === 401) {
+          await AsyncStorage.removeItem("authToken");
+          router.replace("/(auth)/sign-in");
+        } else {
+          console.warn("Failed to load user", err);
+        }
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (err: any) {
-      if (err.status === 401) {
-        await AsyncStorage.removeItem("authToken");
-        router.replace("/(auth)/sign-in");
-      } else {
-        console.warn("Failed to load user", err.message || err);
-      }
-    } finally {
-      if (mounted) setLoading(false);
-    }
-  })();
-  return () => {
-    mounted = false;
-  };
-}, [router]);
+    })();
 
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
-  const goTo = (route: ProfileRoute) => {
-    router.push(route);
-  };
+  /* ---------------- Navigation ---------------- */
+  const goTo = (route: ProfileRoute) => router.push(route);
 
   const onLogout = async () => {
     await AsyncStorage.removeItem("authToken");
-    // clear any other auth state you might have
     router.replace("/(auth)/sign-in");
   };
 
-  const onChangeAvatar = () => {
-    // still a TODO; leave existing behavior
-    console.log("Change avatar");
+  /* ---------------- Avatar upload ---------------- */
+  const onChangeAvatar = async () => {
+    if (uploading) return;
+
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert("Permission required", "Allow photo access to continue");
+      return;
+    }
+const result = await ImagePicker.launchImageLibraryAsync({
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  aspect: [1, 1],
+  quality: 0.8,
+});
+
+
+    if (result.canceled) return;
+
+    try {
+      setUploading(true);
+
+      const asset = result.assets[0];
+
+      const formData = new FormData();
+      formData.append("avatar", {
+        uri: asset.uri,
+        name: "avatar.jpg",
+        type: asset.mimeType ?? "image/jpeg",
+      } as any);
+
+      const { avatarUrl } = await api.uploadAvatar(formData);
+
+      setUser((prev: any) => ({
+        ...prev,
+        avatarUrl,
+      }));
+    } catch (err: any) {
+      Alert.alert(
+        "Upload failed",
+        err?.message ?? "Could not upload profile picture"
+      );
+    } finally {
+      setUploading(false);
+    }
   };
+
+  /* ---------------- Render ---------------- */
+  const avatarUri =
+    resolveAvatarUrl(user?.avatarUrl) ??
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user?.name ?? "User"
+    )}&background=10B981&color=fff`;
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        {/* Header: avatar + name + phone */}
+        {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={onChangeAvatar} style={styles.avatarWrap}>
-            {loading ? (
+          <Pressable
+            onPress={onChangeAvatar}
+            disabled={uploading}
+            style={[
+              styles.avatarWrap,
+              uploading && { opacity: 0.6 },
+            ]}
+          >
+            {loading || uploading ? (
               <ActivityIndicator />
             ) : (
-              <Image
-                source={{
-                  uri:
-                    user?.avatarUrl ??
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name ?? "User")}&background=10B981&color=fff`,
-                }}
-                style={styles.avatar}
-              />
+              <Image source={{ uri: avatarUri }} style={styles.avatar} />
             )}
+
             <View style={styles.avatarEditBadge}>
               <Feather name="camera" size={14} color="#fff" />
             </View>
           </Pressable>
 
-          <Text style={styles.name}>{loading ? "Loading..." : user?.name ?? "Unknown"}</Text>
-          <Text style={styles.phone}>{loading ? "" : user?.phone ?? "+234 800 000 0000"}</Text>
+          <Text style={styles.name}>
+            {loading ? "Loading..." : user?.name ?? "Unknown"}
+          </Text>
+          <Text style={styles.phone}>
+            {loading ? "" : user?.phone ?? "+234 800 000 0000"}
+          </Text>
         </View>
 
         {/* Links */}
@@ -110,9 +172,7 @@ useEffect(() => {
             <Pressable
               key={item.label}
               style={styles.row}
-              onPress={() => {
-                if (item.route) goTo(item.route);
-              }}
+              onPress={() => item.route && goTo(item.route)}
             >
               <View style={styles.rowLeft}>
                 <Feather name={item.icon} size={18} color="#111827" />
@@ -125,12 +185,15 @@ useEffect(() => {
 
         {/* Logout */}
         <View style={styles.footer}>
-          <Pressable onPress={() => {
-            Alert.alert("Log out", "Are you sure you want to log out?", [
-              { text: "Cancel", style: "cancel" },
-              { text: "Log out", style: "destructive", onPress: onLogout },
-            ]);
-          }} style={styles.logoutBtn}>
+          <Pressable
+            onPress={() =>
+              Alert.alert("Log out", "Are you sure?", [
+                { text: "Cancel", style: "cancel" },
+                { text: "Log out", style: "destructive", onPress: onLogout },
+              ])
+            }
+            style={styles.logoutBtn}
+          >
             <Feather name="log-out" size={18} color="#EF4444" />
             <Text style={styles.logoutText}>Log out</Text>
           </Pressable>
@@ -140,14 +203,17 @@ useEffect(() => {
   );
 }
 
+/* ---------------- Styles ---------------- */
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 16 },
+
   header: {
     alignItems: "center",
     marginBottom: 24,
     marginTop: 12,
   },
+
   avatarWrap: {
     width: 96,
     height: 96,
@@ -157,7 +223,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
+
   avatar: { width: "100%", height: "100%" },
+
   avatarEditBadge: {
     position: "absolute",
     bottom: 2,
@@ -169,6 +237,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
   name: { fontSize: 18, fontWeight: "700", marginBottom: 4 },
   phone: { fontSize: 14, color: "#6B7280" },
 
@@ -179,6 +248,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     marginBottom: 8,
   },
+
   row: {
     paddingVertical: 12,
     flexDirection: "row",
@@ -187,15 +257,28 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
   },
+
   rowLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   rowLabel: { fontSize: 15, fontWeight: "600", color: "#111827" },
 
-  footer: { marginTop: "auto", paddingTop: 16, borderTopWidth: 1, borderTopColor: "#F3F4F6" },
+
+  footer: {
+    marginTop: "auto",
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     alignSelf: "flex-start",
   },
-  logoutText: { color: "#EF4444", fontWeight: "700", fontSize: 15 },
+
+  logoutText: {
+    color: "#EF4444",
+    fontWeight: "700",
+    fontSize: 15,
+  },
 });

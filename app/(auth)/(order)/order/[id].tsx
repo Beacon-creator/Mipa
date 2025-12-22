@@ -1,121 +1,109 @@
-import { Stack, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  BackHandler,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as api from "../../../../src/shared/constants/api";
-import { safeApiCall } from "../../../../src/shared/constants/safeApiCall";
 
 export default function OrderDetailsScreen() {
-  const params = useLocalSearchParams();
-  const id = (params.id as string) ?? "";
+  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-const fetchOrder = useCallback(async () => {
-  setLoading(true);
-  const [res, err] = await safeApiCall(() => api.getOrderById(id));
-  if (err) {
-    Alert.alert("Error", err.message || "Failed to load order");
-    setOrder(null);
-  } else {
-    setOrder(res);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ---------------- Disable back ---------------- */
+  useEffect(() => {
+    const onBack = () => true;
+    const sub = BackHandler.addEventListener("hardwareBackPress", onBack);
+    return () => sub.remove();
+  }, []);
+
+  /* ---------------- Fetch ---------------- */
+  const fetchOrder = useCallback(async () => {
+    try {
+      const res = await api.getOrderById(id);
+      setOrder(res);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  /* ---------------- Polling ---------------- */
+  useEffect(() => {
+    fetchOrder();
+    pollingRef.current = setInterval(fetchOrder, 7000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [fetchOrder]);
+
+  if (loading || !order) {
+    return <ActivityIndicator style={{ marginTop: 24 }} />;
   }
-  setLoading(false);
-}, [id]);
-
-
-useEffect(() => {
-  if (!id) return;
-  fetchOrder();
-}, [id, fetchOrder]); 
-
-  if (loading) return <ActivityIndicator style={{ marginTop: 24 }} />;
-
-  if (!order) {
-    return (
-      <SafeAreaView style={{ flex: 1, padding: 16 }}>
-        <Text>No order found</Text>
-      </SafeAreaView>
-    );
-  }
-
-  const items = order.items ?? [];
-  const address = order.address ?? {};
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Stack.Screen options={{ title: `Order ${order.orderNumber ?? order.id}` }} />
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Order Summary */}
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontWeight: "700", fontSize: 18 }}>Order summary</Text>
-          <Text style={{ color: "#6B7280", marginTop: 6 }}>
-            {order.createdAt ? new Date(order.createdAt).toLocaleString() : "Unknown date"}
-          </Text>
-        </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Stack.Screen
+        options={{ title: `Order ${order.orderNumber}`, headerBackVisible: false }}
+      />
 
-        {/* Items */}
+      <View style={{ padding: 16 }}>
+        <FlatList
+          data={order.items}
+          keyExtractor={(_, i) => String(i)}
+          renderItem={({ item }) => (
+            <View style={styles.row}>
+              <Text>{item.name}</Text>
+              <Text>{item.quantity} × ₦{item.price}</Text>
+            </View>
+          )}
+        />
+
         <View style={styles.card}>
-          <Text style={{ fontWeight: "700", marginBottom: 8 }}>Items</Text>
-          <FlatList
-            data={items}
-            keyExtractor={(i: any, idx) => `${i.menuItem}-${idx}`}
-            scrollEnabled={false}
-            renderItem={({ item }: any) => (
-              <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: "700" }}>{item.name}</Text>
-                  <Text style={{ color: "#6B7280" }}>{item.quantity} × ₦{item.price?.toFixed(2) ?? "0.00"}</Text>
-                </View>
-                <Text style={{ fontWeight: "700" }}>₦{item.subtotal?.toFixed(2) ?? "0.00"}</Text>
-              </View>
-            )}
-            ListFooterComponent={() => (
-              <View style={{ borderTopWidth: 1, borderTopColor: "#F3F4F6", paddingTop: 8, marginTop: 8 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ color: "#6B7280" }}>Subtotal</Text>
-                  <Text style={{ fontWeight: "700" }}>₦{order.totalAmount?.toFixed(2) ?? "0.00"}</Text>
-                </View>
-              </View>
-            )}
-          />
+          <Text>Status: {order.status}</Text>
+          <Text>Payment: {order.paymentStatus}</Text>
+          <Text>Total: ₦{order.totalAmount?.toFixed(2)}</Text>
         </View>
 
-        {/* Delivery Address */}
-        <View style={[styles.card, { marginTop: 12 }]}>
-          <Text style={{ fontWeight: "700", marginBottom: 8 }}>Delivery address</Text>
-          {address.fullName && <Text>{address.fullName}</Text>}
-          <Text>{address.line1 ?? ""}</Text>
-          {address.line2 ? <Text>{address.line2}</Text> : null}
-          <Text>
-            {address.city ?? ""}{address.state ? `, ${address.state}` : ""}
-          </Text>
-          {address.phone && <Text>{address.phone}</Text>}
-        </View>
-
-        {/* Status */}
-        <View style={[styles.card, { marginTop: 12 }]}>
-          <Text style={{ fontWeight: "700", marginBottom: 8 }}>Status</Text>
-          <Text style={{ marginBottom: 8 }}>{order.status ?? "Unknown"}</Text>
-          <Text style={{ color: "#6B7280" }}>Payment: {order.paymentStatus ?? "Unknown"}</Text>
-        </View>
-
-        {/* Refresh Button */}
-        <View style={{ marginTop: 16 }}>
-          <Pressable
-            onPress={fetchOrder}
-            style={styles.button}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700" }}>Refresh</Text>}
-          </Pressable>
-        </View>
-      </ScrollView>
+        <Text
+          style={styles.home}
+          onPress={() =>
+            router.replace({ pathname: "/(tabs)/home" })
+          }
+        >
+          Back to Home
+        </Text>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: "#F9FAFB", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#E5E7EB" },
-  button: { backgroundColor: "#111827", paddingVertical: 12, borderRadius: 10, alignItems: "center" },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  card: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  home: {
+    marginTop: 24,
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#10B981",
+  },
 });

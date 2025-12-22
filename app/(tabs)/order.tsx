@@ -1,105 +1,116 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Feather } from "@expo/vector-icons";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as api from "../../src/shared/constants/api";
 import { safeApiCall } from "../../src/shared/constants/safeApiCall";
 
-type OrderStatus = "pending" | "confirmed" | "preparing" | "on_the_way" | "delivered" | "cancelled";
+/* ================= TYPES ================= */
+
+type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "on_the_way"
+  | "delivered"
+  | "cancelled";
 
 type UIOrder = {
   id: string;
   restaurantName: string;
-  restaurantImg?: string;
   status: OrderStatus;
-  eta?: string | null;
-  dateLabel: string;
   itemsSummary: string;
   total: string;
-  paymentStatus?: string;
-  createdAt?: string;
+  paymentStatus: string;
+  createdAt: string;
 };
 
-function statusLabel(status: OrderStatus) {
-  switch (status) {
-    case "on_the_way": return "On the way";
-    case "delivered": return "Delivered";
-    case "preparing": return "Preparing";
-    case "confirmed": return "Confirmed";
-    case "cancelled": return "Cancelled";
-    default: return "Pending";
-  }
-}
+/* ================= HELPERS ================= */
 
-function statusColor(status: OrderStatus) {
-  switch (status) {
-    case "on_the_way": return "#F97316";
-    case "delivered": return "#10B981";
-    case "cancelled": return "#EF4444";
-    default: return "#6B7280";
-  }
-}
+const formatCurrency = (amount: number) =>
+  `₦${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
 
-export default function OrderScreen() {
+const dateGroup = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (d.toDateString() === now.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return "Older";
+};
+
+/* ================= SCREEN ================= */
+
+export default function OrderTab() {
   const [orders, setOrders] = useState<UIOrder[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [actionLoadingOrderId, setActionLoadingOrderId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
-    setLoading(true);
     const [res, err] = await safeApiCall(() => api.listMyOrders());
+
     if (err) {
       Alert.alert("Error", err.message || "Failed to fetch orders");
-    } else {
-      const items = Array.isArray(res) ? res : res?.orders ?? [];
-      const mapped: UIOrder[] = items.map((o: any) => {
-        const itemNames = (o.items || []).slice(0, 3).map((it: any) => it.name);
-        const itemsCount = (o.items || []).reduce((s: number, it: any) => s + (it.quantity || 0), 0);
-        const itemsSummary = `${itemsCount} item${itemsCount !== 1 ? "s" : ""} · ${itemNames.join(", ")}`;
-        const created = o.createdAt ? new Date(o.createdAt) : null;
-        let dateLabel = "Unknown";
-        if (created) {
-          const now = new Date();
-          const sameDay = created.toDateString() === now.toDateString();
-          const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-          if (sameDay) dateLabel = "Today";
-          else if (created.toDateString() === yesterday.toDateString()) dateLabel = "Yesterday";
-          else dateLabel = created.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-        }
-        const total = typeof o.totalAmount === "number" ? formatCurrency(o.totalAmount) : `${o.totalAmount ?? ""}`;
-        const restaurantName = typeof o.restaurant === "object" ? o.restaurant.name || "Restaurant" : o.restaurant ?? "Restaurant";
+      return;
+    }
+
+    if (!Array.isArray(res)) return;
+
+    const mapped: UIOrder[] = res
+      .map((o: any, index: number) => {
+        const id = o.id || o._id;
+        if (!id) return null;
+
+        const itemsCount = (o.items || []).reduce(
+          (s: number, i: any) => s + (i.quantity || 0),
+          0
+        );
+
+        const itemNames = (o.items || [])
+          .slice(0, 2)
+          .map((i: any) => i.name)
+          .join(", ");
+
         return {
-          id: o.id || o._id,
-          restaurantName,
-          restaurantImg: undefined,
-          status: o.status as OrderStatus,
-          eta: null,
-          dateLabel,
-          itemsSummary,
-          total,
+          id: String(id),
+          restaurantName: o.restaurant?.name ?? "Restaurant",
+          status: o.status,
+          itemsSummary: `${itemsCount} item${
+            itemsCount !== 1 ? "s" : ""
+          } · ${itemNames}`,
+          total: formatCurrency(o.totalAmount || 0),
           paymentStatus: o.paymentStatus,
           createdAt: o.createdAt,
         };
-      });
-      setOrders(mapped);
-    }
-    setLoading(false);
+      })
+      .filter(Boolean)
+      // newest first
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime()
+      );
+
+    setOrders(mapped);
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    setLoading(true);
+    fetchOrders().finally(() => setLoading(false));
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -107,288 +118,159 @@ export default function OrderScreen() {
     setRefreshing(false);
   };
 
-  const currentOrder = useMemo(() => orders.find(o => o.status !== "delivered" && o.status !== "cancelled") ?? null, [orders]);
-  const pastOrders = useMemo(() => orders.filter(o => o.id !== (currentOrder?.id ?? "")), [orders, currentOrder]);
+  /* ================= GROUPING ================= */
 
-  const handleMarkPaid = async (orderId: string) => {
-    setActionLoadingOrderId(orderId);
-    const [, err] = await safeApiCall(() => api.markOrderPaid(orderId, { paymentStatus: "paid", paymentMethod: "card" }));
-    if (err) Alert.alert("Error", err.message || "Failed to mark paid");
-    else Alert.alert("Success", "Order marked as paid");
-    await fetchOrders();
-    setActionLoadingOrderId(null);
-  };
+  const activeOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) => o.status !== "delivered" && o.status !== "cancelled"
+      ),
+    [orders]
+  );
+
+  const groupedPastOrders = useMemo(() => {
+    const groups: Record<string, UIOrder[]> = {
+      Today: [],
+      Yesterday: [],
+      Older: [],
+    };
+
+    orders
+      .filter(
+        (o) => o.status === "delivered" || o.status === "cancelled"
+      )
+      .forEach((o) => {
+        groups[dateGroup(o.createdAt)].push(o);
+      });
+
+    return groups;
+  }, [orders]);
+
+  /* ================= RENDER ================= */
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={styles.content}
       >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Orders</Text>
-          <Pressable onPress={fetchOrders} style={{ padding: 8 }}>
-            <Feather name="refresh-cw" size={18} color="#111827" />
-          </Pressable>
-        </View>
+        <Text style={styles.header}>Orders</Text>
 
-        {/* Current Order */}
-        <View style={{ marginTop: 12 }}>
-          <Text style={styles.sectionTitle}>Current order</Text>
-          {loading ? (
-            <ActivityIndicator style={{ marginTop: 12 }} />
-          ) : currentOrder ? (
-            <View style={styles.currentCard}>
-              <View style={{ flexDirection: "row" }}>
-                <Image
-                  source={{ uri: currentOrder.restaurantImg ?? "https://via.placeholder.com/96x96.png?text=R" }}
-                  style={styles.currentImg}
-                />
-                <View style={{ marginLeft: 12, flex: 1 }}>
-                  <Text style={styles.currentRestaurant}>{currentOrder.restaurantName}</Text>
-                  <Text style={styles.currentMeta}>{currentOrder.itemsSummary}</Text>
-                  <Text style={styles.currentMeta}>Placed: {currentOrder.dateLabel}</Text>
-                </View>
-              </View>
+        <Text style={styles.section}>Active Orders</Text>
 
-              <View style={styles.currentFooterRow}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={[styles.statusDot, { backgroundColor: statusColor(currentOrder.status) }]} />
-                  <Text style={styles.statusText}>{statusLabel(currentOrder.status)}</Text>
-                </View>
-                <Text style={styles.currentTotal}>{currentOrder.total}</Text>
-              </View>
+        {loading ? (
+          <ActivityIndicator />
+        ) : activeOrders.length === 0 ? (
+          <Text style={styles.empty}>No active orders</Text>
+        ) : (
+          activeOrders.map((o) => (
+            <OrderCard key={o.id} order={o} />
+          ))
+        )}
 
-              <View style={styles.currentActionsRow}>
-                <Pressable
-                  style={[styles.primaryBtn]}
-                  onPress={() => router.push({ pathname: "/(tabs)/order/[id]", params: { id: currentOrder.id } } as any)}
-                >
-                  <Feather name="map" size={16} color="#fff" />
-                  <Text style={styles.primaryBtnText}>Track order</Text>
-                </Pressable>
+        <Text style={[styles.section, { marginTop: 24 }]}>Past Orders</Text>
 
-                {currentOrder.paymentStatus !== "paid" ? (
-                  <Pressable
-                    style={[styles.secondaryBtn, { marginLeft: 8 }]}
-                    onPress={() => Alert.alert("Mark paid", "Mark this order as paid?", [
-                      { text: "Cancel", style: "cancel" },
-                      { text: "Yes", onPress: () => handleMarkPaid(currentOrder.id) },
-                    ])}
-                    disabled={actionLoadingOrderId === currentOrder.id}
-                  >
-                    {actionLoadingOrderId === currentOrder.id ? <ActivityIndicator /> : <Text style={styles.secondaryBtnText}>Mark as paid</Text>}
-                  </Pressable>
-                ) : (
-                  <Pressable style={[styles.secondaryBtn, { marginLeft: 8 }]} onPress={() => router.push("/(tabs)/home")}>
-                    <Text style={styles.secondaryBtnText}>Browse more</Text>
-                  </Pressable>
-                )}
-              </View>
+        {(["Today", "Yesterday", "Older"] as const).map((label) =>
+          groupedPastOrders[label].length === 0 ? null : (
+            <View key={label}>
+              <Text style={styles.group}>{label}</Text>
+              {groupedPastOrders[label].map((o) => (
+                <OrderCard key={o.id} order={o} />
+              ))}
             </View>
-          ) : (
-            <View style={styles.emptyBox}>
-              <Text style={styles.emptyTitle}>No active orders</Text>
-              <Text style={styles.emptySubtitle}>When you place an order, it will show up here.</Text>
-              <Pressable style={styles.primaryBtn} onPress={() => router.push("/(tabs)/home")}>
-                <Text style={styles.primaryBtnText}>Start ordering</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-
-        {/* Past Orders */}
-        <View style={{ marginTop: 24 }}>
-          <Text style={styles.sectionTitle}>Past orders</Text>
-          {loading ? <ActivityIndicator style={{ marginTop: 12 }} /> : pastOrders.length === 0 ? (
-            <Text style={{ marginTop: 12, color: "#6B7280" }}>No past orders yet.</Text>
-          ) : (
-            pastOrders.map(o => (
-              <Pressable key={o.id} style={styles.pastCard} onPress={() => router.push({ pathname: "/(tabs)/order/[id]", params: { id: o.id } } as any)}>
-                <Image source={{ uri: o.restaurantImg ?? "https://via.placeholder.com/64.png?text=R" }} style={styles.pastImg} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.pastRestaurant}>{o.restaurantName}</Text>
-                  <Text style={styles.pastMeta}>{o.dateLabel} · {o.itemsSummary}</Text>
-                  <View style={styles.pastFooterRow}>
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                      <View style={[styles.statusDot, { backgroundColor: statusColor(o.status) }]} />
-                      <Text style={styles.statusText}>{statusLabel(o.status)}</Text>
-                    </View>
-                    <Text style={styles.pastTotal}>{o.total}</Text>
-                  </View>
-                </View>
-              </Pressable>
-            ))
-          )}
-        </View>
+          )
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// small currency formatter
-function formatCurrency(amount: number) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(amount);
-  } catch {
-    return `$${amount.toFixed(2)}`;
-  }
+/* ================= CARD ================= */
+
+function OrderCard({ order }: { order: UIOrder }) {
+  return (
+    <Pressable
+      style={styles.card}
+      onPress={() =>
+        router.push({
+          pathname: "/(tabs)/order/[id]",
+          params: { id: order.id },
+        } as any)
+      }
+    >
+      <Image
+        source={{ uri: "https://via.placeholder.com/64x64.png?text=🍽️" }}
+        style={styles.image}
+      />
+
+      <View style={{ flex: 1 }}>
+        <Text style={styles.restaurant}>{order.restaurantName}</Text>
+        <Text style={styles.meta}>{order.itemsSummary}</Text>
+        <Text style={styles.total}>{order.total}</Text>
+      </View>
+    </Pressable>
+  );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
-  headerTitle: {
+  content: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  header: {
     fontSize: 22,
     fontWeight: "800",
+    marginBottom: 12,
   },
-
-  sectionTitle: {
+  section: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "700",
     marginBottom: 8,
   },
-
-  // Current order card
-  currentCard: {
-    borderRadius: 16,
+  group: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginVertical: 6,
+  },
+  empty: {
+    color: "#6B7280",
+  },
+  card: {
+    flexDirection: "row",
     padding: 12,
-    backgroundColor: "#F9FAFB",
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF", // 🔥 FIX
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  currentImg: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
+  image: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    marginRight: 12,
   },
-  currentRestaurant: {
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  currentMeta: {
-    marginTop: 4,
-    color: "#6B7280",
-    fontSize: 13,
-  },
-  currentFooterRow: {
-    flexDirection: "row",
-    marginTop: 8,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    color: "#4B5563",
-  },
-  currentTotal: {
+  restaurant: {
     fontSize: 15,
     fontWeight: "700",
   },
-  currentActionsRow: {
-    flexDirection: "row",
-    marginTop: 10,
-    gap: 8,
-  },
-
-  // Buttons (local styling but matches the style we’ve been using)
-  primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    backgroundColor: "#111827",
-  },
-  primaryBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  secondaryBtn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#111827",
-    backgroundColor: "#fff",
-  },
-  secondaryBtnText: {
-    fontWeight: "700",
-    fontSize: 14,
-    color: "#111827",
-  },
-
-  // Empty state
-  emptyBox: {
-    marginTop: 8,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#F9FAFB",
-    alignItems: "center",
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    textAlign: "center",
-    marginBottom: 6,
-  },
-
-  // Past orders
-  pastHeaderRow: {
-    flexDirection: "column",
-    gap: 6,
-  },
-  pastCard: {
-    flexDirection: "row",
-    marginTop: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  pastImg: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
-  },
-  pastRestaurant: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  pastMeta: {
+  meta: {
     fontSize: 12,
     color: "#6B7280",
-    marginTop: 2,
+    marginVertical: 2,
   },
-  pastFooterRow: {
-    flexDirection: "row",
-    marginTop: 6,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  pastTotal: {
+  total: {
     fontSize: 14,
     fontWeight: "700",
   },
