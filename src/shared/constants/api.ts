@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+
 
 const API_BASE = "http://192.168.0.135:4000/api";
 export { API_BASE };
@@ -146,4 +148,110 @@ export async function createReview(restaurantId: string, rating: number, comment
     body: JSON.stringify({ rating, comment }),
   });
   return handleResponse(res);
+}
+
+// Fetch restaurants (GET /api/restaurants)
+export async function getRestaurants(opts?: {
+  search?: string;
+  location?: string;
+  category?: string;
+  minRating?: number;
+  maxDistanceKm?: number;
+  page?: number;
+  limit?: number;
+}) {
+  const headers = await getAuthHeaders();
+  const params = new URLSearchParams();
+  if (opts?.search) params.append("search", opts.search);
+  if (opts?.location) params.append("location", opts.location);
+  if (opts?.category) params.append("category", opts.category);
+  if (opts?.minRating != null) params.append("minRating", String(opts.minRating));
+  if (opts?.maxDistanceKm != null) params.append("maxDistanceKm", String(opts.maxDistanceKm));
+  if (opts?.page != null) params.append("page", String(opts.page));
+  if (opts?.limit != null) params.append("limit", String(opts.limit));
+
+  const url = `${API_BASE}/restaurants${params.toString() ? `?${params.toString()}` : ""}`;
+  const res = await fetch(url, { method: "GET", headers });
+  const data = await handleResponse(res);
+  // backend returns { items, page, limit, total } — return items for convenience
+  return data?.items ?? data;
+}
+
+// Fetch menu items (GET /api/menu?restaurantId=...)
+export async function getMenuItems(restaurantId?: string, opts?: {
+  search?: string;
+  type?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
+}) {
+  const headers = await getAuthHeaders();
+  const params = new URLSearchParams();
+  if (restaurantId) params.append("restaurantId", restaurantId);
+  if (opts?.search) params.append("search", opts.search);
+  if (opts?.type) params.append("type", opts.type);
+  if (opts?.minPrice != null) params.append("minPrice", String(opts.minPrice));
+  if (opts?.maxPrice != null) params.append("maxPrice", String(opts.maxPrice));
+  if (opts?.page != null) params.append("page", String(opts.page));
+  if (opts?.limit != null) params.append("limit", String(opts.limit));
+
+  const url = `${API_BASE}/menu${params.toString() ? `?${params.toString()}` : ""}`;
+  const res = await fetch(url, { method: "GET", headers });
+  const data = await handleResponse(res);
+  // backend returns { items, page, limit, total } — return items for convenience
+  return data?.items ?? data;
+}
+
+export const OrderService = {
+  async quickOrder(payload: any) {
+    const res = await axios.post(`${API_BASE}/orders`, payload);
+    return res.data;
+  },
+
+  async getById(orderId: string) {
+    const res = await axios.get(`${API_BASE}/orders/${orderId}`);
+    return res.data;
+  },
+
+  async listMine() {
+    const res = await axios.get(`${API_BASE}/orders`);
+    return res.data;
+  },
+
+  async markPaid(orderId: string, body: { paymentStatus?: string; paymentMethod?: string }) {
+    const res = await axios.patch(`${API_BASE}/orders/${orderId}/pay`, body);
+    return res.data;
+  },
+
+  async payOrder(orderId: string) {
+    const res = await axios.post(`${API_BASE}/orders/${orderId}/pay`);
+    return res.data;
+  }
+};
+
+export const payOrder = async (orderId: string) => {
+  const res = await axios.post(`${API_BASE}/orders/${orderId}/pay`);
+  return res.data;
+}
+
+export async function uploadAvatar(formData: FormData) {
+  const token = await AsyncStorage.getItem("authToken");
+
+  const res = await fetch(`${API_BASE}/users/me/avatar`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // ❌ DO NOT set Content-Type manually
+    },
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.message ?? "Upload failed");
+  }
+
+  return data as { avatarUrl: string };
 }

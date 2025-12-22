@@ -1,4 +1,3 @@
-// src/components/RestaurantCard.tsx
 import React from "react";
 import { View, Text, Image, Pressable } from "react-native";
 import { styles } from "../constants/RestaurantCard.styles";
@@ -28,3 +27,4 @@ export const RestaurantCard: React.FC<Props> = ({ restaurant, onPress }) => {
     </Pressable>
   );
 };
+export default RestaurantCard;
