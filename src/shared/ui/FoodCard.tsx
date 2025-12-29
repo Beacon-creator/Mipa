@@ -2,8 +2,6 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, Image, Pressable, ActivityIndicator } from "react-native";
 import { useCart } from "./CartContext";
-import { useUser } from "../../shared/constants/useUser";
-import { OrderService } from "../../shared/constants/api";
 import { styles } from "../../shared/constants/FoodCard.styles";
 
 export interface FoodItem {
@@ -27,8 +25,6 @@ type Props = {
 
 export const FoodCard: React.FC<Props> = ({ item, onQuickOrder, onAddToCart, isInCart = false }) => {
   const { addToCart } = useCart();
-  const { user } = useUser();
-  const [loadingBuy, setLoadingBuy] = useState(false);
   const [loadingCart, setLoadingCart] = useState(false);
 
   const menuItemId = item.id;
@@ -64,43 +60,10 @@ export const FoodCard: React.FC<Props> = ({ item, onQuickOrder, onAddToCart, isI
           1
         );
       }
-    } catch (err) {
-      console.warn("Add to cart failed", err);
+    } catch {
       alert("Could not add to cart");
     } finally {
       setLoadingCart(false);
-    }
-  };
-
-  const handleBuyNow = async () => {
-    if (loadingBuy) return;
-
-    if (!menuItemId || !restaurantId) {
-      return alert("Invalid item: missing menuItemId or restaurantId");
-    }
-
-    if (!user?.address || !user.address.line1) {
-      return alert("Please add a delivery address in your profile before placing orders.");
-    }
-
-    setLoadingBuy(true);
-    try {
-      if (onQuickOrder) {
-        await onQuickOrder(item);
-      } else {
-        const payload = {
-          restaurantId,
-          items: [{ menuItemId, quantity: 1 }],
-          address: user.address,
-          paymentMethod: "card",
-        };
-        await OrderService.quickOrder(payload);
-      }
-    } catch (err: any) {
-      console.warn("Buy now failed", err);
-      alert(err?.response?.data?.message ?? err?.message ?? "Could not place order");
-    } finally {
-      setLoadingBuy(false);
     }
   };
 

@@ -18,7 +18,6 @@ export default function ReviewForm({ restaurantId, onSuccess }: { restaurantId: 
       setRating(5);
       onSuccess?.();
     } catch (err: any) {
-      console.warn("review err", err);
       Alert.alert("Failed", err?.message || "Could not submit review");
     } finally {
       setLoading(false);

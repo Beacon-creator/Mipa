@@ -1,4 +1,3 @@
-// app/src/shared/constants/FoodCard.styles.ts
 import { Dimensions, StyleSheet } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -49,7 +48,7 @@ export const styles = StyleSheet.create({
     minWidth: 68,
   },
 
-  // (Optional) Menu-style card if you still use it somewhere else
+  /*  Menu Card (for Restaurant Menu screen)  */
   menuCard: {
     width: width * 0.48,
     marginRight: 12,
@@ -99,7 +98,7 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  /* ---------- Buttons (small) ---------- */
+  /*  Buttons (small)  */
   smallBtnBase: {
     paddingHorizontal: 12,
     paddingVertical: 8,

@@ -22,7 +22,6 @@ async function handleResponse(res: Response) {
     try {
       data = JSON.parse(text);
     } catch {
-      console.warn("handleResponse: response not JSON:", text.slice(0, 500));
       const err: any = new Error(`Invalid JSON response from server (HTTP ${res.status})`);
       err.status = res.status;
       err.raw = text;
@@ -31,7 +30,7 @@ async function handleResponse(res: Response) {
   }
 
   if (!res.ok) {
-    // auto-clear token when unauthorized
+ 
     if (res.status === 401) {
       try { await AsyncStorage.removeItem("authToken"); } catch {}
     }
@@ -150,7 +149,7 @@ export async function createReview(restaurantId: string, rating: number, comment
   return handleResponse(res);
 }
 
-// Fetch restaurants (GET /api/restaurants)
+// Fetch restaurants 
 export async function getRestaurants(opts?: {
   search?: string;
   location?: string;
@@ -173,11 +172,10 @@ export async function getRestaurants(opts?: {
   const url = `${API_BASE}/restaurants${params.toString() ? `?${params.toString()}` : ""}`;
   const res = await fetch(url, { method: "GET", headers });
   const data = await handleResponse(res);
-  // backend returns { items, page, limit, total } — return items for convenience
   return data?.items ?? data;
 }
 
-// Fetch menu items (GET /api/menu?restaurantId=...)
+// Fetch menu items
 export async function getMenuItems(restaurantId?: string, opts?: {
   search?: string;
   type?: string;
@@ -242,7 +240,6 @@ export async function uploadAvatar(formData: FormData) {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      // ❌ DO NOT set Content-Type manually
     },
     body: formData,
   });
@@ -254,4 +251,28 @@ export async function uploadAvatar(formData: FormData) {
   }
 
   return data as { avatarUrl: string };
+}
+
+export function resolveAvatarUrl(url?: string) {
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  return `${API_BASE}${url}`;
+}
+
+
+export async function safeApiCall<T>(
+  fn: () => Promise<T>
+): Promise<[T | null, Error | null]> {
+  try {
+    const res = await fn();
+    return [res, null]; // ✅ DATA FIRST
+  } catch (error: any) {
+    return [null, error];
+  }
+}
+ 
+
+export function isValidObjectId(id?: string): boolean {
+  // MongoDB ObjectId is 24 hex chars
+  return typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id);
 }

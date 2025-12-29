@@ -46,8 +46,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const parsed = JSON.parse(raw) as CartItem[];
           setItems(parsed);
         }
-      } catch (e) {
-        console.warn("CartProvider: failed to load cart", e);
+      } catch{
+        alert("Failed to load cart from storage");
       } finally {
         setLoading(false);
       }
@@ -61,8 +61,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // persist to AsyncStorage (fire-and-forget-ish but we await to log errors)
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
-    } catch (e) {
-      console.warn("CartProvider: failed to save cart", e);
+    } catch {
+        alert("Failed to save cart to storage");
     }
   };
 
@@ -116,8 +116,8 @@ const totalAmount = () => {
   const saveToStorage = async () => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {
-      console.warn("CartProvider: saveToStorage error", e);
+    } catch {
+      alert("Failed to save cart to storage");
     }
   };
 
