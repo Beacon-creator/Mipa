@@ -29,13 +29,13 @@ export default function PaymentSettingsScreen() {
   };
 
   const addCard = () => {
-    // In a real app, open a form or SDK.
+  
     const newId = `c${Date.now()}`;
     const newCard: Card = {
       id: newId,
       brand: "Visa",
       last4: String(Math.floor(Math.random() * 9000) + 1000),
-      isDefault: cards.length === 0, // first card becomes default
+      isDefault: cards.length === 0, 
     };
     setCards((prev) => [...prev, newCard]);
     Alert.alert("Card added", `New ${newCard.brand} •••• ${newCard.last4} added.`);

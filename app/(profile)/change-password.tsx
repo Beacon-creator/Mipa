@@ -1,5 +1,4 @@
-// app/(profile)/change-password.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";

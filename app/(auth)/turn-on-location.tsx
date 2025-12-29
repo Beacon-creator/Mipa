@@ -13,7 +13,7 @@ export default function TurnOnLocation() {
       setBusy(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
-        // (optional) const loc = await Location.getCurrentPositionAsync({});
+
         router.push("/(auth)/signup-success");
       } else {
         Alert.alert("Permission needed", "Please enable location to continue.");

@@ -18,7 +18,7 @@ import slide3 from "../../assets/images/onboarding/slide3.png";
 import mipaLogo from "../../assets/logos/Mipalogo.png";
 
 const { width } = Dimensions.get("window");
-// Make the hero image larger and naturally centered
+
 const IMG_SIZE = Math.min(320, Math.round(width * 0.6));
 const PADDING_H = 24;
 
@@ -86,7 +86,7 @@ export default function OnboardingCarousel() {
           <Text style={styles.brandText}>Mipa</Text>
         </View>
 
-        {/* Middle: pages fill remaining space and center image/content */}
+
         <View style={styles.middle}>
           <FlatList
             ref={listRef}
@@ -102,18 +102,18 @@ export default function OnboardingCarousel() {
             renderItem={({ item }) => (
               <View style={styles.page}>
                
-                {/* Centered block: image, dots (close), text */}
+            
                 <View style={styles.centerBlock}>
-                  {/* Circular image */}
+            
                   <View style={styles.imgCircle}>
                     <Image source={item.image} style={styles.image} resizeMode="cover" />
                   </View>
-                  {/* Centered texts */}
+         
                   <View style={styles.textBlock}>
                     <Text style={styles.title}>{item.title}</Text>
                     <Text style={styles.subtitle}>{item.text}</Text>
                   </View>
-                  {/* Dots close to the image */}
+                 
                   <View style={styles.dotsRow}>
                     {slides.map((_, i) => (
                       <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
@@ -170,10 +170,10 @@ const styles = StyleSheet.create({
   logo: { width: 28, height: 28 },
   brandText: { fontSize: 20, fontWeight: "700", letterSpacing: 0.5 },
 
-  // Middle area where pages live; ensures central alignment
+  
   middle: { flex: 1 },
   listContent: {
-    // ensure each page takes the full height of middle area for proper centering
+   
     height: "90%",
   },
 
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: PADDING_H,
   },
 
-  // Circular image (bigger and central)
+  
   imgCircle: {
     width: IMG_SIZE,
     height: IMG_SIZE,
@@ -194,11 +194,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F3F4F6",
-    marginBottom: 12, // dots are close to image
+    marginBottom: 12,
   },
   image: { width: "100%", height: "100%" },
 
-  // Dots close to image
   dotsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -209,12 +208,12 @@ const styles = StyleSheet.create({
   dot: { width: 9, height: 9, borderRadius: 4, backgroundColor: "#D1D5DB" },
   dotActive: { width: 9, height: 9, borderRadius: 6, backgroundColor: "#333333" },
 
-  // Texts under dots
+
   textBlock: { width: "70%", alignItems: "center" },
   title: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 6 },
   subtitle: { fontSize: 14, textAlign: "center", lineHeight: 20, opacity: 0.75 },
 
-  // Bottom controls pinned
+  
   footer: {
     width: "100%",
     paddingHorizontal: PADDING_H,

@@ -36,7 +36,7 @@ export default function PayOrderScreen() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
 
-  // ---------------- Fetch order ----------------
+  //  Fetch order 
   useEffect(() => {
     const loadOrder = async () => {
       try {
@@ -55,7 +55,6 @@ export default function PayOrderScreen() {
 
         setOrder(res.data);
       } catch (err: any) {
-        console.warn("order fetch error", err);
         Alert.alert(
           "Error",
           err?.response?.data?.message || "Could not load order"
@@ -68,7 +67,7 @@ export default function PayOrderScreen() {
     if (id) loadOrder();
   }, [id]);
 
-  // ---------------- Pay ----------------
+  //  Pay 
   const handlePay = async () => {
     if (!order) return;
 
@@ -100,7 +99,6 @@ router.replace({
 });
 
     } catch (err: any) {
-      console.warn("payment error", err);
       Alert.alert(
         "Payment failed",
         err?.response?.data?.message || "Could not process payment"
@@ -110,7 +108,7 @@ router.replace({
     }
   };
 
-  // ---------------- UI ----------------
+  //  UI 
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>

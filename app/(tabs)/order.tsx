@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +16,7 @@ import { router } from "expo-router";
 import * as api from "../../src/shared/constants/api";
 import { safeApiCall } from "../../src/shared/constants/safeApiCall";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 type OrderStatus =
   | "pending"
@@ -36,7 +36,7 @@ type UIOrder = {
   createdAt: string;
 };
 
-/* ================= HELPERS ================= */
+/*  HELPERS  */
 
 const formatCurrency = (amount: number) =>
   `₦${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
@@ -52,7 +52,7 @@ const dateGroup = (dateStr: string) => {
   return "Older";
 };
 
-/* ================= SCREEN ================= */
+/*  SCREEN  */
 
 export default function OrderTab() {
   const [orders, setOrders] = useState<UIOrder[]>([]);
@@ -118,7 +118,7 @@ export default function OrderTab() {
     setRefreshing(false);
   };
 
-  /* ================= GROUPING ================= */
+  /*  GROUPING  */
 
   const activeOrders = useMemo(
     () =>
@@ -146,7 +146,7 @@ export default function OrderTab() {
     return groups;
   }, [orders]);
 
-  /* ================= RENDER ================= */
+  /* RENDER  */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -189,7 +189,7 @@ export default function OrderTab() {
   );
 }
 
-/* ================= CARD ================= */
+/*  CARD  */
 
 function OrderCard({ order }: { order: UIOrder }) {
   return (
@@ -216,7 +216,7 @@ function OrderCard({ order }: { order: UIOrder }) {
   );
 }
 
-/* ================= STYLES ================= */
+/*  STYLES  */
 
 const styles = StyleSheet.create({
   container: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF", // 🔥 FIX
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },

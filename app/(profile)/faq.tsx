@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, StatusBar } from "react-native";
+import { useState } from "react";
+import { ScrollView, View, Text, Pressable, StyleSheet, StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
 type FaqItem = {
@@ -52,7 +53,7 @@ export default function FaqScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Frequently Asked Questions</Text>
         <Text style={styles.subHeader}>
-          Find quick answers to common questions about orders, payments and your account.
+          Find quick answers to common questions.
         </Text>
 
         {faqs.map((item) => {

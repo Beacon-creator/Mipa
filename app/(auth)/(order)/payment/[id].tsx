@@ -22,14 +22,14 @@ export default function PaymentScreen() {
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* ---------------- Disable back ---------------- */
+  /*  Disable back  */
   useEffect(() => {
     const onBack = () => true;
     const sub = BackHandler.addEventListener("hardwareBackPress", onBack);
     return () => sub.remove();
   }, []);
 
-  /* ---------------- Fetch order ---------------- */
+  /*  Fetch order  */
   const fetchOrder = useCallback(async () => {
     try {
       const res = await api.getOrderById(id);
@@ -48,7 +48,7 @@ export default function PaymentScreen() {
     }
   }, [id]);
 
-  /* ---------------- Polling ---------------- */
+  /*  Polling  */
   useEffect(() => {
     fetchOrder();
     pollingRef.current = setInterval(fetchOrder, 5000);
@@ -57,7 +57,7 @@ export default function PaymentScreen() {
     };
   }, [fetchOrder]);
 
-  /* ---------------- Pay ---------------- */
+  /*  Pay  */
   const handlePay = async () => {
     if (paying || order?.paymentStatus === "paid") return;
 

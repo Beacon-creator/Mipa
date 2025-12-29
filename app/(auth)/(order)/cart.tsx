@@ -71,9 +71,6 @@ export default function CartScreen() {
         paymentMethod: "card",
       };
 
-      console.log("Checkout payload:", payload);
-      console.log("User token:", user.token);
-
       const res = await axios.post(`${API_BASE}/orders`, payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
@@ -88,7 +85,6 @@ export default function CartScreen() {
 
 
     } catch (err: any) {
-      console.warn("checkout error", err);
       Alert.alert("Checkout failed", err?.response?.data?.message || err?.message || "Could not place order");
     } finally {
       setCheckoutLoading(false);

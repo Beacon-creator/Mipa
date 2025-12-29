@@ -1,8 +1,7 @@
-// app/index.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { Redirect } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Index() {
   const [loading, setLoading] = useState(true);
@@ -19,8 +18,7 @@ export default function Index() {
           // New user → start onboarding
           setRedirectTo("/(onboarding)/carousel");
         }
-      } catch (err) {
-        console.warn("Error checking auth token:", err);
+      } catch {
         setRedirectTo("/(auth)/sign-in");
       } finally {
         setLoading(false);
@@ -40,5 +38,5 @@ export default function Index() {
     return <Redirect href={redirectTo as any} />;
   }
 
-  return null; // fallback
+  return null; 
 }

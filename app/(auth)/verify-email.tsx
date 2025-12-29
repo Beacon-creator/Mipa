@@ -98,7 +98,6 @@ export default function VerifyEmailScreen() {
       Keyboard.dismiss();
       router.push("/(auth)/signup-success");
     } catch (err: any) {
-      console.error("verify error", err);
       Alert.alert("Verification failed", err.message || "Please try again.");
     } finally {
       setLoading(false);
@@ -137,7 +136,6 @@ export default function VerifyEmailScreen() {
         Alert.alert("Code sent", "A verification code was generated.");
       }
     } catch (err: any) {
-      console.error("resend error", err);
       Alert.alert("Resend failed", err.message || "Please try again.");
     } finally {
       setResendLoading(false);
@@ -152,7 +150,7 @@ export default function VerifyEmailScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Verify your email</Text>
             <Text style={styles.subtitle}>
-              We sent a 4-digit code to {userEmail || "your email"}. It will auto-fill for development.
+              We sent a 4-digit code to {userEmail || "your email"}.
             </Text>
           </View>
 

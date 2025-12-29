@@ -61,7 +61,6 @@ export default function SignInScreen() {
       // navigate to the app — replace history so user can't go back to auth
       router.replace("/(tabs)/home");
     } catch (err: any) {
-      console.error("login error", err);
       Alert.alert("Login error", err?.message ?? "Something went wrong");
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 // app/(profile)/my-profile.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";

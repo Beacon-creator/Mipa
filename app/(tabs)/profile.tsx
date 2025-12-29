@@ -1,4 +1,3 @@
-// app/(tabs)/profile.tsx
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -16,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import * as api from "../../src/shared/constants/api";
-import { resolveAvatarUrl } from "../../src/shared/constants/resolveAvatarUrl";
+import { resolveAvatarUrl } from "../../src/shared/constants/api";
 
 type ProfileRoute =
   | "/(profile)/my-profile"
@@ -44,7 +43,7 @@ export default function ProfileTabScreen() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
-  /* ---------------- Fetch user ---------------- */
+  /*  Fetch user  */
   useEffect(() => {
     let mounted = true;
 
@@ -57,7 +56,6 @@ export default function ProfileTabScreen() {
           await AsyncStorage.removeItem("authToken");
           router.replace("/(auth)/sign-in");
         } else {
-          console.warn("Failed to load user", err);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -69,7 +67,7 @@ export default function ProfileTabScreen() {
     };
   }, [router]);
 
-  /* ---------------- Navigation ---------------- */
+  /*  Navigation  */
   const goTo = (route: ProfileRoute) => router.push(route);
 
   const onLogout = async () => {
@@ -77,7 +75,7 @@ export default function ProfileTabScreen() {
     router.replace("/(auth)/sign-in");
   };
 
-  /* ---------------- Avatar upload ---------------- */
+  /*  Pic upload  */
   const onChangeAvatar = async () => {
     if (uploading) return;
 
@@ -126,7 +124,7 @@ const result = await ImagePicker.launchImageLibraryAsync({
     }
   };
 
-  /* ---------------- Render ---------------- */
+  /*  Render  */
   const avatarUri =
     resolveAvatarUrl(user?.avatarUrl) ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -203,7 +201,7 @@ const result = await ImagePicker.launchImageLibraryAsync({
   );
 }
 
-/* ---------------- Styles ---------------- */
+/*  Styles  */
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 16 },

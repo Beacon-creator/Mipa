@@ -1,5 +1,4 @@
-// app/(profile)/contact-us.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { StatusBar, View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { Stack } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
@@ -53,7 +52,7 @@ export default function ContactUsScreen() {
         </View>
 
         <View style={{ marginTop: 24 }}>
-          <Text style={styles.subtle}>Or email us at support@example.com</Text>
+          <Text style={styles.subtle}>Or email us at support@mipa.com</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

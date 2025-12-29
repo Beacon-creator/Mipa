@@ -1,5 +1,4 @@
 import { router } from "expo-router";
-import React from "react";
 import { Image, Pressable, StatusBar, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import mipaLogo from "../../assets/logos/Mipalogo.png";
@@ -14,8 +13,6 @@ export default function GetStartedScreen() {
       <View style={styles.centerContent}>
         <Image source={mipaLogo} style={{ width: 44, height: 44, marginBottom: 5 }} resizeMode="contain" />
         <Text style={styles.text}>Mipa</Text>
-
-        {/* Button */}
         <Pressable
           onPress={onGetStarted}
           style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}

@@ -44,13 +44,12 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      // success — navigate to reset screen and pass email (so user doesn't need to retype)
+      // success — navigate to reset screen and pass email as param)
       router.push({
         pathname: "/(auth)/reset-password",
         params: { email: email.trim() },
       });
     } catch (err: any) {
-      console.error("forgot password error", err);
       Alert.alert("Error", err?.message ?? "Something went wrong");
     } finally {
       setLoading(false);

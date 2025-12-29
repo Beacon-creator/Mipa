@@ -13,7 +13,6 @@ export default function TurnOnLocation() {
       setBusy(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
-        // (optional) const loc = await Location.getCurrentPositionAsync({});
         router.push("/(auth)/signup-success");
       } else {
         Alert.alert("Permission needed", "Please enable location to continue.");
@@ -42,7 +41,7 @@ export default function TurnOnLocation() {
       <View style={{ height: 10 }} />
       <SecondaryButton title="Skip for now" onPress={skip} />
       <View style={{ height: 8 }} />
-      <GhostButton title="Why we need location" onPress={() => Alert.alert("Location", "Used to show nearby restaurants and relevant content.")} />
+      <GhostButton title="Why we need location" onPress={() => Alert.alert("Location", "Used to show nearby restaurants and relevant content for you.")} />
     </View>
   );
 }

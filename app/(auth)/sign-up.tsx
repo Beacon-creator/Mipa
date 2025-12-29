@@ -4,8 +4,7 @@ import { StatusBar, View, Text, StyleSheet, KeyboardAvoidingView, Platform, Aler
 import { router } from "expo-router";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton, LinkText } from "../../src/shared/ui/Button";
-import { API_BASE } from "../../src/shared/constants/api";
-import { safeApiCall } from "@/src/shared/constants/safeApiCall";
+import { API_BASE, safeApiCall } from "../../src/shared/constants/api";
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
@@ -18,7 +17,7 @@ export default function SignUpScreen() {
       return;
     }
 
-    const result = await safeApiCall(async () => {
+    const [data, error] = await safeApiCall(async () => {
       const res = await fetch(`${API_BASE}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28,12 +27,12 @@ export default function SignUpScreen() {
       try { return text ? JSON.parse(text) : null; } catch { return { raw: text }; }
     });
 
-    if (!result.success) {
-      Alert.alert("Signup Error", result.errorMessage);
+    if (error) {
+      Alert.alert("Signup Error", error.message);
       return;
     }
 
-    const { user, verificationCode } = result.data ?? {};
+    const { user, verificationCode } = data ?? {};
 
     router.push({
       pathname: "/(auth)/verify-email",

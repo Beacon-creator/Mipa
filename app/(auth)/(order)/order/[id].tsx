@@ -19,14 +19,14 @@ export default function OrderDetailsScreen() {
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* ---------------- Disable back ---------------- */
+  /*  Disable back  */
   useEffect(() => {
     const onBack = () => true;
     const sub = BackHandler.addEventListener("hardwareBackPress", onBack);
     return () => sub.remove();
   }, []);
 
-  /* ---------------- Fetch ---------------- */
+  /*  Fetch  */
   const fetchOrder = useCallback(async () => {
     try {
       const res = await api.getOrderById(id);
@@ -36,7 +36,7 @@ export default function OrderDetailsScreen() {
     }
   }, [id]);
 
-  /* ---------------- Polling ---------------- */
+  /*  Polling  */
   useEffect(() => {
     fetchOrder();
     pollingRef.current = setInterval(fetchOrder, 7000);

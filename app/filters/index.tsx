@@ -12,7 +12,6 @@ export default function FoodFilter() {
   };
 
   const apply = () => {
-    // TODO: Apply filter to HomeScreen (via context or query params)
     router.back();
   };
 

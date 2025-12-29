@@ -53,7 +53,7 @@ export default function ResetPasswordScreen() {
       Keyboard.dismiss();
       const payload = {
         email: email.trim(),
-        token: token.trim(), // matches resetPasswordSchema
+        token: token.trim(), 
         newPassword: newPassword,
       };
 
@@ -71,11 +71,8 @@ export default function ResetPasswordScreen() {
         setLoading(false);
         return;
       }
-
-      // success — navigate to success or sign-in
       router.push("/(auth)/signup-success");
     } catch (err: any) {
-      console.error("reset password error", err);
       Alert.alert("Error", err?.message ?? "Something went wrong");
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
-// app/(tabs)/home.tsx
-import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
+
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -36,7 +36,6 @@ function looksLikeObjectId(id?: string) {
 }
 
 export default function HomeScreen() {
-  // ------------------- State -------------------
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -55,7 +54,7 @@ export default function HomeScreen() {
   const { user } = useUser();
   const cartMenuItemIds = useMemo(() => cartItemsFull.map((i) => i.menuItemId), [cartItemsFull]);
 
-  // ------------------- Animated Filter -------------------
+  //  Animated Filter 
   const filterAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -71,13 +70,13 @@ export default function HomeScreen() {
     outputRange: [0, 200], // adjust height as needed
   });
 
-  // ------------------- Debounced Search -------------------
+  //  Debounced Search 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedQuery(query.trim().toLowerCase()), 300);
     return () => clearTimeout(handler);
   }, [query]);
 
-  // ------------------- Load Data -------------------
+  //  Load Data 
   useEffect(() => {
     let mounted = true;
     const loadRestaurants = async () => {
@@ -87,7 +86,6 @@ export default function HomeScreen() {
         if (!mounted) return;
         setRestaurants(res ?? []);
       } catch (err: any) {
-        console.warn("Failed to load restaurants", err);
         Alert.alert("Error", err?.message ?? "Could not fetch restaurants");
       } finally {
         if (mounted) setLoadingRestaurants(false);
@@ -114,7 +112,6 @@ export default function HomeScreen() {
         }));
         setMenuItems(normalized);
       } catch (err: any) {
-        console.warn("Failed to load menu items", err);
         Alert.alert("Error", err?.message ?? "Could not fetch menu items");
       }
     };
@@ -124,7 +121,7 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // ------------------- Filtered Items -------------------
+  //  Filtered Items 
   const activeFoods = useMemo(() => {
     let list = menuItems;
     if (selectedCategory !== "all") {
@@ -147,7 +144,7 @@ export default function HomeScreen() {
     });
   }, [restaurants, debouncedQuery, minRating, maxDistance, locationFilter, maxPrice]);
 
-  // ------------------- Handlers -------------------
+  //  Handlers 
   const handleAddToCart = useCallback(
     (menuItem: any) => {
       const menuItemId = menuItem.id ?? menuItem._id;
@@ -176,7 +173,7 @@ export default function HomeScreen() {
       const restaurantId = menuItem.restaurantId ?? menuItem.restaurant ?? menuItem.restaurant_id;
 
       if (!looksLikeObjectId(menuItemId) || !looksLikeObjectId(restaurantId)) {
-        Alert.alert("Invalid item", "This item is not available for ordering.");
+        Alert.alert("Sorry", "This item is not available for ordering.");
         return;
       }
 
@@ -211,7 +208,6 @@ export default function HomeScreen() {
 
         Alert.alert("Order placed", `Your order #${orderId} has been placed successfully!`);
       } catch (err: any) {
-        console.warn("Quick order failed", err);
         Alert.alert("Order failed", err?.response?.data?.message ?? err?.message ?? "Could not place order");
       }
     },
@@ -235,7 +231,7 @@ export default function HomeScreen() {
     []
   );
 
-  // ------------------- Render -------------------
+  //  Render 
   if (loadingRestaurants) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -248,7 +244,7 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <StatusBar barStyle="dark-content" />
 
-      {/* ------------------- Search Header ------------------- */}
+      {/*  Search Header  */}
       <View style={{ paddingHorizontal: 16 }}>
         <SearchHeader query={query} setQuery={setQuery} onFilterToggle={() => setShowFilter((p) => !p)} />
 
@@ -275,7 +271,7 @@ export default function HomeScreen() {
         </Animated.View>
       </View>
 
-      {/* ------------------- Nearby Restaurants ------------------- */}
+      {/*  Nearby Restaurants  */}
 <FlatList
   data={filteredNearby}
   keyExtractor={(r) => r.id ?? r._id}
@@ -284,7 +280,7 @@ export default function HomeScreen() {
   contentContainerStyle={{ paddingBottom: 100 }}
   ListHeaderComponent={
     <>
-      {/* ------------------- Categories ------------------- */}
+      {/*  Categories */}
       <FlatList
         data={categories}
         horizontal
@@ -313,7 +309,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
       />
 
-      {/* ------------------- Menu Items ------------------- */}
+      {/*  Menu Items */}
       <FlatList
         data={activeFoods}
         horizontal
@@ -355,7 +351,7 @@ export default function HomeScreen() {
   );
 }
 
-// ------------------- Styles -------------------
+//  Styles 
 const styles = StyleSheet.create({
   consumableCard: { width: 90, height: 110, borderRadius: 14, marginHorizontal: 8, padding: 8, alignItems: "center", justifyContent: "center" },
   consumableActive: { backgroundColor: "#10B981" },
