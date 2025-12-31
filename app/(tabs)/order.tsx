@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as api from "../../src/shared/constants/api";
-import { safeApiCall } from "../../src/shared/constants/safeApiCall";
+import { safeApiCall } from "../../src/shared/constants/api";
 
 /*  TYPES  */
 

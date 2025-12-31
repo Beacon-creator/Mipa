@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,14 +13,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { OrderService } from "../../src/shared/constants/api";
 import * as api from "../../src/shared/constants/api";
+import { OrderService } from "../../src/shared/constants/api";
 import { useUser } from "../../src/shared/constants/useUser";
 import { useCart } from "../../src/shared/ui/CartContext";
-import { RestaurantCard } from "../../src/shared/ui/RestaurantCard";
-import { SearchHeader } from "../../src/shared/ui/SearchHeader";
 import { FiltersPanel } from "../../src/shared/ui/FiltersPanel";
 import { FoodCard } from "../../src/shared/ui/FoodCard";
+import { RestaurantCard } from "../../src/shared/ui/RestaurantCard";
+import { SearchHeader } from "../../src/shared/ui/SearchHeader";
 
 const categories = [
   { id: "all", name: "All" },
@@ -82,9 +82,18 @@ export default function HomeScreen() {
     const loadRestaurants = async () => {
       setLoadingRestaurants(true);
       try {
-        const res = (await api.getRestaurants?.({ limit: 50 })) ?? [];
-        if (!mounted) return;
-        setRestaurants(res ?? []);
+       const res = (await api.getRestaurants?.({ limit: 50 })) ?? [];
+if (!mounted) return;
+
+const normalizedRestaurants = res.map((r: any) => ({
+  ...r,
+  id: r.id ?? r._id,
+  img: r.imageUrl ?? r.img,
+  distanceKm: r.distanceKm ?? Number(r.distance),
+}));
+
+setRestaurants(normalizedRestaurants);
+
       } catch (err: any) {
         Alert.alert("Error", err?.message ?? "Could not fetch restaurants");
       } finally {
@@ -103,15 +112,18 @@ export default function HomeScreen() {
       try {
         const items = (await api.getMenuItems?.(undefined, { limit: 50 })) ?? [];
         if (!mounted) return;
-        const normalized = (items ?? []).map((it: any) => ({
-          ...it,
-          restaurantId: it.restaurant ?? it.restaurantId,
-          id: it.id ?? it._id,
-          title: (it.name ?? it.title ?? "").toLowerCase(),
-          img: it.imageUrl ?? it.img,
-        }));
+      const normalized = (items ?? []).map((it: any) => ({
+  ...it,
+  id: it.id ?? it._id,
+  restaurantId: it.restaurant ?? it.restaurantId,
+  title: it.name ?? it.title,
+  searchTitle: (it.name ?? it.title ?? "").toLowerCase(),
+  img: it.imageUrl ?? it.img,
+}));
+
         setMenuItems(normalized);
       } catch (err: any) {
+
         Alert.alert("Error", err?.message ?? "Could not fetch menu items");
       }
     };
@@ -127,7 +139,9 @@ export default function HomeScreen() {
     if (selectedCategory !== "all") {
       list = list.filter((f) => (f.type ?? "").toLowerCase() === selectedCategory.toLowerCase());
     }
-    if (debouncedQuery) list = list.filter((f) => (f.title ?? "").includes(debouncedQuery));
+    if (debouncedQuery) {
+  list = list.filter((f) => f.searchTitle?.includes(debouncedQuery));
+}
     if (typeFilter) list = list.filter((f) => f.type === typeFilter);
     if (maxPrice != null) list = list.filter((f) => Number(f.price) <= maxPrice);
     return list;
@@ -271,13 +285,12 @@ export default function HomeScreen() {
         </Animated.View>
       </View>
 
-      {/*  Nearby Restaurants  */}
 <FlatList
   data={filteredNearby}
-  keyExtractor={(r) => r.id ?? r._id}
+keyExtractor={(r) => String(r.id)}
   renderItem={renderRestaurant}
   showsVerticalScrollIndicator={false}
-  contentContainerStyle={{ paddingBottom: 100 }}
+  contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16 }}
   ListHeaderComponent={
     <>
       {/*  Categories */}
@@ -314,7 +327,8 @@ export default function HomeScreen() {
         data={activeFoods}
         horizontal
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(i) => i.id ?? i._id}
+       
+keyExtractor={(i) => String(i.id)}
         renderItem={({ item }) => (
           <FoodCard
             item={{
