@@ -7,6 +7,7 @@ import {
   FlatList,
   Pressable,
   StatusBar,
+  Image,
   StyleSheet,
   Text,
   View,
@@ -23,12 +24,12 @@ import { RestaurantCard } from "../../src/shared/ui/RestaurantCard";
 import { SearchHeader } from "../../src/shared/ui/SearchHeader";
 
 const categories = [
-  { id: "all", name: "All" },
-  { id: "food", name: "Food" },
-  { id: "drink", name: "Drink" },
-  { id: "cake", name: "Cake" },
-  { id: "salad", name: "Salad" },
-  { id: "snacks", name: "Snacks" },
+  { id: "all", name: "All", image: "https://tinyurl.com/allmipa" },
+  { id: "food", name: "Food", image: "https://tinyurl.com/foodmipa" },
+  { id: "drink", name: "Drink", image: "https://tinyurl.com/drinkmipa" },
+  { id: "cake", name: "Cake", image: "https://tinyurl.com/cakemipa" },
+  { id: "salad", name: "Salad", image: "https://tinyurl.com/saladmipa"},
+  { id: "snacks", name: "Snacks", image: "https://tinyurl.com/snacksmipa" },
 ];
 
 function looksLikeObjectId(id?: string) {
@@ -309,6 +310,11 @@ keyExtractor={(r) => String(r.id)}
                 : styles.consumableInactive,
             ]}
           >
+            <Image
+              source={{ uri: item.image }}
+              style={styles.consumableImage}
+              resizeMode = "stretch" 
+            />
             <Text
               style={[
                 styles.consumableText,
@@ -367,8 +373,9 @@ keyExtractor={(i) => String(i.id)}
 
 //  Styles 
 const styles = StyleSheet.create({
-  consumableCard: { width: 90, height: 110, borderRadius: 14, marginHorizontal: 8, padding: 8, alignItems: "center", justifyContent: "center" },
+  consumableCard: { width: 90, height: 100, borderRadius: 14, marginHorizontal: 8, padding: 8, alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 },
   consumableActive: { backgroundColor: "#10B981" },
   consumableInactive: { backgroundColor: "#F3F4F6" },
   consumableText: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  consumableImage: { width: 60, height: 60 },
 });

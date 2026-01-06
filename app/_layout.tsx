@@ -17,15 +17,23 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <CartProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            {/* Add onboarding as a root flow */}
+            <Stack.Screen name="(onboarding)" />
+
+            {/* Main app tabs */}
+            <Stack.Screen name="(tabs)" />
+
+            {/* Modals */}
+            <Stack.Screen
+              name="modal"
+              options={{ presentation: 'modal', title: 'Modal' }}
+            />
+          </Stack>
+
+          <StatusBar style="auto" />
+        </ThemeProvider>
       </CartProvider>
-     
     </SafeAreaProvider>
-   
   );
 }

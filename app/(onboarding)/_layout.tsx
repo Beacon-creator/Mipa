@@ -4,7 +4,7 @@ export default function OnboardingLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false, // full-screen onboarding
+        headerShown: false,
         animation: "fade",
       }}
     />

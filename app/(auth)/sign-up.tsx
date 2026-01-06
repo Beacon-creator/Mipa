@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 24, gap: 16, paddingTop: 40 },
   header: { marginBottom: 12 },
-  title: { fontSize: 20, fontWeight: "700" },
-  subtitle: { fontSize: 14, opacity: 0.5, marginTop: 10 },
+  title: { fontSize: 20, fontWeight: "700", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.5, marginTop: 10, textAlign: "center" },
   form: { gap: 12, marginBottom: 10 },
 });

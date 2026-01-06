@@ -9,8 +9,10 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { LabeledField } from "../../src/shared/ui/LabeledField";
 import { PrimaryButton } from "../../src/shared/ui/Button";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -44,7 +46,6 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      // success — navigate to reset screen and pass email as param)
       router.push({
         pathname: "/(auth)/reset-password",
         params: { email: email.trim() },
@@ -59,11 +60,24 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={styles.container}>
+          {/* Absolute back button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#185221" />
+          </TouchableOpacity>
+
           <View style={styles.header}>
             <Text style={styles.title}>Forgot password</Text>
-            <Text style={styles.subtitle}>Enter your email to receive a reset code.</Text>
+            <Text style={styles.subtitle}>
+              Enter your email to receive a reset code.
+            </Text>
           </View>
 
           <View style={styles.form}>
@@ -79,7 +93,11 @@ export default function ForgotPasswordScreen() {
             />
           </View>
 
-          <PrimaryButton title={loading ? "Sending..." : "Continue"} onPress={onContinue} disabled={loading} />
+          <PrimaryButton
+            title={loading ? "Sending..." : "Continue"}
+            onPress={onContinue}
+            disabled={loading}
+          />
           {loading ? <ActivityIndicator style={{ marginTop: 10 }} /> : null}
         </View>
       </KeyboardAvoidingView>
@@ -90,8 +108,17 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 24, gap: 16, paddingTop: 40 },
+  backButton: {
+    position: "absolute",
+    top: 30,
+    left: 24,
+    zIndex: 10,
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+  },
   header: { marginBottom: 12, justifyContent: "flex-start" },
-  title: { fontSize: 20, fontWeight: "700", textAlign: "left" },
-  subtitle: { fontSize: 14, opacity: 0.5, justifyContent: "flex-start", marginTop: 10 },
+  title: { fontSize: 20, fontWeight: "700", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "center", marginTop: 15 },
   form: { gap: 12, marginBottom: 10 },
 });

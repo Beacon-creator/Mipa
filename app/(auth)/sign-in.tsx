@@ -74,6 +74,7 @@ export default function SignInScreen() {
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>Sign In</Text>
+             <Text style={styles.subtitle}>Buy your favourite meal</Text>
           </View>
 
           <View style={styles.form}>
@@ -102,6 +103,7 @@ export default function SignInScreen() {
 
           <View style={{ height: 10 }} />
           <LinkText title="Forgot password?" onPress={() => router.push("/(auth)/forgot-password")} />
+          <LinkText title="Sign up" onPress={() => router.push("/(auth)/sign-up")} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -112,6 +114,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, padding: 24, gap: 16, paddingTop: 40 },
   header: { marginBottom: 12, justifyContent: "flex-start" },
-  title: { fontSize: 20, fontWeight: "700", textAlign: "left" },
+  title: { fontSize: 20, fontWeight: "700", textAlign: "center" },
+  subtitle: { fontSize: 14, opacity: 0.5, textAlign: "center", marginTop: 10 },
   form: { gap: 12, marginBottom: 12 },
 });

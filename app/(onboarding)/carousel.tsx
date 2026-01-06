@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   header: {
     width: "100%",
     paddingHorizontal: PADDING_H,
-    paddingTop: 4,
+    paddingTop: 25,
     paddingBottom: 5,
     flexDirection: "row",
     alignItems: "center",
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   logo: { width: 28, height: 28 },
-  brandText: { fontSize: 20, fontWeight: "700", letterSpacing: 0.5 },
+  brandText: { fontSize: 20, paddingTop: 4, fontWeight: "700", letterSpacing: 0.5 },
 
   
   middle: { flex: 1 },

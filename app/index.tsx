@@ -13,13 +13,15 @@ export default function Index() {
         const token = await AsyncStorage.getItem("authToken");
         if (token) {
           // Returning user → go to sign-in screen or main app
-          setRedirectTo("/(auth)/sign-in");
+         // setRedirectTo("/(auth)/sign-in");
+         setRedirectTo("/(onboarding)/carousel");
         } else {
           // New user → start onboarding
           setRedirectTo("/(onboarding)/carousel");
         }
       } catch {
-        setRedirectTo("/(auth)/sign-in");
+       // setRedirectTo("/(auth)/sign-in");
+       setRedirectTo("/(onboarding)/carousel");
       } finally {
         setLoading(false);
       }
