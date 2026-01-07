@@ -38,7 +38,7 @@ export default function ForgotPasswordScreen() {
       });
 
       const json = await res.json();
-
+const resetToken = json?.resetToken || json?.token || "";
       if (!res.ok) {
         const msg = json?.error || json?.message || "Failed to send reset code";
         Alert.alert("Error", msg);
@@ -48,7 +48,7 @@ export default function ForgotPasswordScreen() {
 
       router.push({
         pathname: "/(auth)/reset-password",
-        params: { email: email.trim() },
+        params: { email: email.trim(), token: resetToken },
       });
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Something went wrong");

@@ -19,18 +19,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE } from "../../src/shared/constants/api";
 
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ email?: string }>();
+  const params = useLocalSearchParams<{ email?: string; token?: string }>();
   const prefilledEmail = (params?.email ?? "") as string;
-
+  const prefilledToken = (params?.token ?? "") as string;
+  
   const [email, setEmail] = useState(prefilledEmail);
-  const [token, setToken] = useState(""); // OTP from email
+  const [token, setToken] = useState(prefilledToken); // OTP from email
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (prefilledEmail) setEmail(prefilledEmail);
-  }, [prefilledEmail]);
+    if (prefilledToken) setToken(prefilledToken);
+  }, [prefilledEmail, prefilledToken]);
 
   // Simple email validation
   const isValidEmail = (email: string) =>
@@ -135,7 +137,7 @@ export default function ResetPasswordScreen() {
               onChangeText={setToken}
               keyboardType="number-pad"
               placeholder="4-digit token"
-              returnKeyType="next"
+              editable={!prefilledToken}
             />
             <LabeledField
               label="New password"

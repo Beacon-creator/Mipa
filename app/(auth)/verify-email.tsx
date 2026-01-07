@@ -19,16 +19,19 @@ import { API_BASE } from "../../src/shared/constants/api";
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string; devCode?: string }>();
+
   const userEmail = (params?.email ?? "") as string;
   const devCode = (params?.devCode ?? null) as string | null;
 
   const cells = useMemo(() => [0, 1, 2, 3], []);
   const [code, setCode] = useState<string[]>(["", "", "", ""]);
   const inputs = useRef<(TextInput | null)[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false); // 🔒 prevents double verify
 
-  // Autofill devCode on mount
+  // Autofill dev code (DEV ONLY)
   useEffect(() => {
     if (devCode && devCode.length === 4) {
       setCode(devCode.split(""));
@@ -37,6 +40,8 @@ export default function VerifyEmailScreen() {
   }, [devCode]);
 
   const setDigit = (i: number, v: string) => {
+    if (loading || resendLoading) return;
+
     const val = v.replace(/[^0-9]/g, "").slice(-1);
     const next = [...code];
     next[i] = val;
@@ -64,9 +69,20 @@ export default function VerifyEmailScreen() {
 
     const text = await res.text();
     let json: any = null;
-    try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = { raw: text };
+    }
 
-    if (!res.ok) throw new Error(json?.error || json?.message || `Verify failed (HTTP ${res.status})`);
+    if (!res.ok) {
+      throw new Error(
+        json?.error ||
+          json?.message ||
+          `Verification failed (HTTP ${res.status})`
+      );
+    }
+
     return json;
   };
 
@@ -76,64 +92,84 @@ export default function VerifyEmailScreen() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
+
     const text = await res.text();
     let json: any = null;
-    try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = { raw: text };
+    }
 
-    if (!res.ok) throw new Error(json?.error || json?.message || `Failed to resend (HTTP ${res.status})`);
+    if (!res.ok) {
+      throw new Error(
+        json?.error ||
+          json?.message ||
+          `Failed to resend (HTTP ${res.status})`
+      );
+    }
+
     return json;
   };
 
   const onVerify = useCallback(async () => {
     if (!userEmail) {
-      Alert.alert("Missing email", "No email provided. Please go back and sign up again.");
+      Alert.alert(
+        "Missing email",
+        "No email provided. Please go back and sign up again."
+      );
       return;
     }
 
-    if (!canVerify) return;
+    if (!canVerify || loading || hasSubmitted) return;
 
+    setHasSubmitted(true);
     setLoading(true);
+
     try {
       await verifyApi(userEmail, otpString);
       Keyboard.dismiss();
-      router.push("/(auth)/signup-success");
+      router.replace("/(auth)/signup-success");
     } catch (err: any) {
-      Alert.alert("Verification failed", err.message || "Please try again.");
+      setHasSubmitted(false);
+      Alert.alert(
+        "Verification failed",
+        err.message || "Please try again."
+      );
     } finally {
       setLoading(false);
     }
-  }, [otpString, userEmail, canVerify, router]);
+  }, [otpString, userEmail, canVerify, loading, hasSubmitted, router]);
 
-  // Auto-submit when all digits are filled
+  // Auto-submit ONCE when OTP complete
   useEffect(() => {
-    if (otpString.length !== 4 || loading || resendLoading) return;
+    if (otpString.length !== 4) return;
+    if (loading || resendLoading || hasSubmitted) return;
 
     const t = setTimeout(() => {
-      if (otpString.length === 4 && !loading) {
-        onVerify();
-      }
-    }, 250);
+      onVerify();
+    }, 300);
 
     return () => clearTimeout(t);
-  }, [otpString, loading, resendLoading, onVerify]);
+  }, [otpString, loading, resendLoading, hasSubmitted, onVerify]);
 
   const onResend = async () => {
-    if (!userEmail) {
-      Alert.alert("Missing email", "No email provided. Please go back and sign up again.");
-      return;
-    }
+    if (!userEmail || resendLoading || loading) return;
 
     setResendLoading(true);
+    setHasSubmitted(false);
+    setCode(["", "", "", ""]);
+
     try {
       const json = await resendApi(userEmail);
-      const returned = (json?.verificationCode || json?.resetCode) ?? null;
+      const returned =
+        (json?.verificationCode || json?.resetCode) ?? null;
 
       if (returned && returned.length === 4) {
         setCode(returned.split(""));
-        inputs.current[3]?.focus();
-        setTimeout(() => onVerify(), 600);
+        setTimeout(() => inputs.current[3]?.focus(), 100);
       } else {
-        Alert.alert("Code sent", "A verification code was generated.");
+        Alert.alert("Code sent", "A new verification code was sent.");
       }
     } catch (err: any) {
       Alert.alert("Resend failed", err.message || "Please try again.");
@@ -145,7 +181,17 @@ export default function VerifyEmailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#111827" />
+        </View>
+      )}
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>Verify your email</Text>
@@ -158,30 +204,49 @@ export default function VerifyEmailScreen() {
             {cells.map((i) => (
               <TextInput
                 key={i}
-                ref={(el: TextInput | null) => { inputs.current[i] = el; }}
+                ref={(el) => {
+                  inputs.current[i] = el;
+                }}
                 value={code[i]}
                 onChangeText={(v) => setDigit(i, v)}
                 onKeyPress={(e) => onKeyPress(i, e)}
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
                 maxLength={1}
+                editable={!loading && !resendLoading}
                 autoFocus={i === 0}
-                style={styles.otpCell}
+                style={[
+                  styles.otpCell,
+                  (loading || resendLoading) && { opacity: 0.6 },
+                ]}
               />
             ))}
           </View>
 
           <View style={{ alignItems: "center", marginTop: 12 }}>
-            <Text style={styles.mutedText}>Didn’t receive the code?</Text>
+            <Text style={styles.mutedText}>
+              Didn’t receive the code?
+            </Text>
             <View style={{ marginTop: 6 }}>
-              <LinkText title="Resend" onPress={onResend} />
+              <LinkText
+                title={resendLoading ? "Sending..." : "Resend"}
+                onPress={resendLoading || loading ? undefined : onResend}
+              />
             </View>
-            {resendLoading && <ActivityIndicator style={{ marginTop: 8 }} />}
+            {resendLoading && (
+              <ActivityIndicator style={{ marginTop: 8 }} />
+            )}
           </View>
 
           <View style={{ height: 16 }} />
-          <PrimaryButton title="Verify" onPress={onVerify} disabled={!canVerify || loading} />
-          {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
+
+      <PrimaryButton
+  title="Verify"
+  onPress={onVerify}
+  disabled={!canVerify}
+  loading={loading}
+/>
+
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -193,8 +258,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, justifyContent: "center" },
   header: { alignItems: "center", marginBottom: 16, paddingHorizontal: 8 },
   title: { fontSize: 24, fontWeight: "800", textAlign: "center" },
-  subtitle: { fontSize: 14, textAlign: "center", opacity: 0.7, marginTop: 6, lineHeight: 20 },
-  otpRow: { flexDirection: "row", gap: 12, alignSelf: "center", marginTop: 8 },
+  subtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    opacity: 0.7,
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  otpRow: {
+    flexDirection: "row",
+    gap: 12,
+    alignSelf: "center",
+    marginTop: 8,
+  },
   otpCell: {
     width: 56,
     height: 56,
@@ -206,4 +282,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   mutedText: { color: "#6B7280", marginBottom: 6 },
+  loadingOverlay: {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
 });
