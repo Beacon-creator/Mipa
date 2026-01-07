@@ -3,6 +3,7 @@ import React from "react";
 import {
   Pressable,
   Text,
+  ActivityIndicator,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -11,16 +12,18 @@ import {
 
 type BtnProps = PressableProps & {
   title: string;
+  onPress: () => void;
+  loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   disabled?: boolean;
 };
 
-export function PrimaryButton({ title, onPress, style, disabled, ...rest }: BtnProps) {
+export function PrimaryButton({ title, onPress, style, textStyle, loading = false, disabled = false, ...rest }: BtnProps) {
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={({ pressed }) => [
         styles.primary,
         pressed && styles.pressed,
@@ -29,7 +32,7 @@ export function PrimaryButton({ title, onPress, style, disabled, ...rest }: BtnP
       ]}
       {...rest}
     >
-      <Text style={styles.primaryText}>{title}</Text>
+      {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>{title}</Text>}
     </Pressable>
   );
 }
