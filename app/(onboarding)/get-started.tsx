@@ -17,7 +17,7 @@ export default function GetStartedScreen() {
           onPress={onGetStarted}
           style={({ pressed }) => [styles.button, pressed && { opacity: 0.8 }]}
         >
-          <Text style={styles.buttonText}>Get Started</Text>
+          <Text style={styles.buttonText}>Get Started here</Text>
         </Pressable>
       </View>
     </SafeAreaView>
