@@ -3,7 +3,6 @@ import axios from "axios";
 
 
 const API_BASE = "https://mipa-api.onrender.com/api";
-//const API_BASE = "http://192.168.0.135:4000/api";
 export { API_BASE };
 
 async function getAuthHeaders() {

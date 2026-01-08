@@ -29,7 +29,7 @@ export default function VerifyEmailScreen() {
 
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false); // 🔒 prevents double verify
+  const [hasSubmitted, setHasSubmitted] = useState(false); // prevents double verify
 
   // Autofill dev code (DEV ONLY)
   useEffect(() => {
